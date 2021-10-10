@@ -1,4 +1,4 @@
-//import Particle from './Particle';
+import Particle from './Particle';
 import { asteroidVertices, randomNumBetween } from './helpers';
 import type { CanvasItem, IState, Iposition} from './game.types'
 
@@ -27,13 +27,13 @@ export interface Iprops {
 }
 
 
-export default class Asteroid<Iastroid> {
+export default class Asteroid {
   type;
   position;
   vertices;
   rotation;
   score;
-  velocity;
+  velocity:Iposition;
   create;
   addScore;
   onSound;
@@ -69,9 +69,9 @@ export default class Asteroid<Iastroid> {
       file: 'asteroidHit',
       status: 'PLAYING'
     })
+    */
     this.delete = true;
     this.addScore(this.score);
-
     // Explode
     for (let i = 0; i < this.radius; i++) {
       const particle = new Particle({
@@ -86,7 +86,7 @@ export default class Asteroid<Iastroid> {
           y: randomNumBetween(-1.5, 1.5)
         },
       });
-      this.create(particle, 'particles');
+      this.create(particle);
     }
 
     // Break into smaller asteroids
@@ -101,15 +101,14 @@ export default class Asteroid<Iastroid> {
             x: randomNumBetween(-10, 20)+this.position.x,
             y: randomNumBetween(-10, 20)+this.position.y
           },
-          create: this.create.bind(this),
-          addScore: this.addScore.bind(this),
-          type: this.type,
+          create: this.create,
+          addScore: this.addScore,
           onSound: this.onSound,
         });
-        this.create(asteroid, 'asteroids');
+        this.create(asteroid);
       }
     }
-    */
+
   }
 
   render(state:IState){

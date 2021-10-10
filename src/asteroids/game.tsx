@@ -110,7 +110,7 @@ export class Game extends Component<IProps> {
     };
 
     for (let i = 0; i < amount; i++) {
-      let asteroid = new Asteroid<CanvasItem>({
+      let asteroid = new Asteroid({
         size: 80,
         position: {
           x: randomNumBetweenExcluding(0, this.state.screen.width, ship.position.x-60, ship.position.x+60),
