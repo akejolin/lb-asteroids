@@ -12,6 +12,8 @@ export interface CanvasItem {
   create: Function,
   render: Function,
   type: string,
+  destroy: Function,
+  radius: number,
 }
 
 

@@ -28,11 +28,11 @@ export interface Ikeys {
 
 type IProps = {
     cb:Function,
-    state: Ikeys,
+    keys: Ikeys,
     gameStatus: string,
   }
 
-export default ({gameStatus, state, cb=()=>{}}:IProps) => {
+export default ({gameStatus, keys, cb=()=>{}}:IProps) => {
 
     //const keyState = useAppSelector((state) => state.keys)
     //const gameStatusState = useAppSelector((state) => state.status.value)
@@ -49,17 +49,13 @@ export default ({gameStatus, state, cb=()=>{}}:IProps) => {
             }
         }
         
-    
-        const keys = Object.assign({}, state)
-    
-        keys.left  = e.keyCode === KEY.LEFT || e.keyCode === KEY.A ? value : false;
-        keys.right  = e.keyCode === KEY.RIGHT || e.keyCode === KEY.D ? value : false;
-        keys.up  = e.keyCode === KEY.UP || e.keyCode === KEY.W ? value : false;
-        keys.down  = e.keyCode === KEY.DOWN  ? value : false;
-        keys.space  = e.keyCode === KEY.SPACE  ? value : false;
-        keys.return  = e.keyCode === KEY.RETURN  ? value : false;
-        keys.weapon  = e.keyCode === KEY.WEAPON  ? value : false;
-    
+        if (e.keyCode === KEY.LEFT   || e.keyCode === KEY.A) keys.left  = value;
+        if (e.keyCode === KEY.RIGHT  || e.keyCode === KEY.D) keys.right = value;
+        if (e.keyCode === KEY.UP     || e.keyCode === KEY.W) keys.up    = value;
+        if (e.keyCode === KEY.DOWN) keys.down = value;
+        if (e.keyCode === KEY.SPACE) keys.space = value;
+        if (e.keyCode === KEY.RETURN) keys.return = value;
+        if (e.keyCode === KEY.WEAPON) keys.weapon = value;
         //dispatch(update(keys))
         cb(keys)
     }

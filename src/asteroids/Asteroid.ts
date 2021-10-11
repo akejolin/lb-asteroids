@@ -111,7 +111,7 @@ export default class Asteroid {
 
   }
 
-  render(state:IState){
+  render(state:IState):void {
     // Move
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;

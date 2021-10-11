@@ -8,6 +8,7 @@ import ScreenHandler from './screen-handler'
 import {randomNumBetweenExcluding, randomInterger} from './helpers'
 import { themes } from './color-theme'
 import Asteroid from './Asteroid'
+import Ship from './Ship'
 import type { Ikeys } from './keys'
 import type { Iscreen } from './screen-handler'
 import type { IState, CanvasItem, Iposition } from './game.types'
@@ -55,6 +56,9 @@ export class Game extends Component<IProps> {
       readyforNextLife: false,
       hasError: false,
     }
+    this.createObject = this.createObject.bind(this)
+    this.checkCollision = this.checkCollision.bind(this)
+    
   }
 
   componentDidMount():void {
@@ -99,10 +103,11 @@ export class Game extends Component<IProps> {
 
     this.update()
     this.generateAsteroids(3)
+    this.createShip()
   }
 
   generateAsteroids(amount:number) {
-    let ship = this.canvasItems.find(i => i.type === 'ship') || {
+    let ship = this.canvasItems.find(item => item.type === 'ship') || {
       position: {
         x: 0,
         y: 0,
@@ -123,6 +128,24 @@ export class Game extends Component<IProps> {
       this.createObject(asteroid);
     }
   }
+  createShip() {
+    
+    let ship = new Ship({
+      position: {
+        x: this.state.screen.width/2,
+        y: this.state.screen.height/2
+      },
+      create: this.createObject,
+      onDie: () => {}, //this.checkForLives.bind(this),
+      upgrade: () => {}, //this.upgrade,
+      onSound: () => {}, //this.onSound.bind(this),
+    });
+    this.createObject(ship)
+    //this.props.actions.updateShieldFuel(0)
+  }
+  createObject(item:CanvasItem):void {
+    this.canvasItems.push(item);
+  }
 
   update():void {
 
@@ -137,7 +160,15 @@ export class Game extends Component<IProps> {
       context.fillRect(0, 0, screen.width, screen.height);
       context.globalAlpha = 1;
     }
+    this.collisionBetween('bullet', [ 'asteroid', 'ufo'], (item1:CanvasItem, item2:CanvasItem) => {
+      item1.destroy(item2.type);
+      item2.destroy(item1.type);
+    })
 
+    this.collisionBetween('ship', [ 'asteroid', 'ufo'], (item1:CanvasItem, item2:CanvasItem) => {
+      item1.destroy(item2.type);
+      item2.destroy(item1.type);
+    })
     this.updateObjects()
     requestAnimationFrame(() => {this.update()})
   }
@@ -146,15 +177,43 @@ export class Game extends Component<IProps> {
     let index = 0;
     for (let item of items) {
       if (item.delete) {
-        this.canvasItems.splice(index, 1);
+        items.splice(index, 1);
       }else{
         items[index].render(this.state);
       }
       index++;
     }
   }
-  createObject(item:CanvasItem):void {
-    this.canvasItems.push(item);
+  collisionBetween(primary:string, secondary:Array<string>, cb:Function):void {
+
+    const haystack = this.canvasItems
+    const primaryArray = haystack.filter(item => item.type === primary)
+    const secondaryArray = haystack.filter(item => secondary.indexOf(item.type) > -1)
+
+    let a = primaryArray.length - 1;
+    let b;
+    for (a; a > -1; --a) {
+      b = secondaryArray.length - 1;
+      for (b; b > -1; --b) {
+        const item1 = primaryArray[a];
+        const item2 = secondaryArray[b];
+        if (item1 && item2 && this.checkCollision(item1, item2)) {
+          cb(item1, item2)
+        }
+      }
+    }
+
+    
+  }
+
+  checkCollision(obj1:CanvasItem, obj2:CanvasItem, distance = 0):boolean {
+    var vx = obj1.position.x - obj2.position.x;
+    var vy = obj1.position.y - obj2.position.y;
+    var length = Math.sqrt(vx * vx + vy * vy);
+    if (length < ((obj1.radius + distance) + (obj2.radius + distance))) {
+      return true;
+    }
+    return false;
   }
 
   render() {
@@ -162,7 +221,7 @@ export class Game extends Component<IProps> {
     return (
       <React.Fragment>
         <ScreenHandler cb={(screen:Iscreen) => this.setState({screen})} />
-        <KeyHandler gameStatus={this.props.gameStatus}  state={this.state.keys} cb={(keys:Ikeys) => this.setState({keys})}/>
+        <KeyHandler gameStatus={this.props.gameStatus}  keys={this.state.keys} cb={(keys:Ikeys) => this.setState({keys})}/>
         <canvas
           id="canvas-board"
           ref={this.canvasRef}
