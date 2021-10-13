@@ -62,3 +62,19 @@ button:hover{
   background-color: #ffffff;
   color: #d10e0e;
 }
+
+
+
+.blinking {
+  animation: blink-blink infinite 0.3s linear;
+}
+.blinking-slow {
+  animation: blink-blink infinite 1s linear;
+}
+
+@keyframes blink-blink {
+  0%   { visibility: visible; }
+  50% { visibility: visible; }
+  51% { visibility: hidden; }
+  100% { visibility: hidden; }
+}

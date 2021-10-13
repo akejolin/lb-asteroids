@@ -1,37 +1,77 @@
 import Particle from './Particle';
 import { asteroidVertices, randomNumBetween } from './helpers';
 import { addInterval, removeInterval } from './gameIntervalHandler'
+import type { CanvasItem, IState, Iposition} from './game.types'
 
-let classRoot = this;
+export interface Iprops {
+  position: Iposition,
+  size: number,
+  create:Function,
+  addScore: Function,
+  onSound: Function,
+  upgrade: Function,
+  upgradeType: number,
+  maxAge: number,
+  birthFrame: number,
+}
+
+interface IupgradeType {
+  type: string,
+  size: number,
+  duration: number,
+  image: string,
+  color: string,
+}
+
 export default class Present {
-  constructor(args) {
-    this.objectType = 'present'
-    classRoot = this;
-    this.position = args.position
+  type;
+  position;
+  vertices;
+  rotation;
+  score;
+  velocity:Iposition;
+  create;
+  addScore;
+  onSound;
+  radius;
+  rotationSpeed;
+  delete;
+  upgrade;
+  image:HTMLImageElement;
+  alpha;
+  isInRadar;
+  upgradeTypes:IupgradeType[];
+  upgradeType: number;
+  color;
+  maxAge;
+  birthFrame;
+  constructor(props:Iprops) {
+    this.type = 'present'
+    this.position = props.position
     this.velocity = {
       x: randomNumBetween(-1.5, 1.5),
       y: randomNumBetween(-1.5, 1.5)
     }
     this.rotation = 0;
+    this.delete = false;
     this.rotationSpeed = randomNumBetween(-1, 1)
-    this.radius = args.size;
-    const additionalScore = Number(args.additionalScore) || 0
-    this.score = parseInt(((80/this.radius)*5) + additionalScore);
-    this.create = args.create;
-    this.addScore = args.addScore;
-    this.upgrade = args.upgrade;
-    this.vertices = asteroidVertices(8, args.size)
-    this.image = args.image;
-    this.imageWidth = args.imageWidth;
-    this.imageHeight = args.imageHeight;
-    this.type= args.type;
+    this.radius = props.size;
+    this.score = Math.floor((80/this.radius)*5);
+    this.create = props.create;
+    this.addScore = props.addScore;
+    this.upgrade = props.upgrade;
+    this.vertices = asteroidVertices(8, props.size)
     this.alpha = 0.1;
-    this.onSound = args.onSound;
+    this.onSound = props.onSound;
+    this.maxAge = props.maxAge || 1000;
     this.isInRadar = false
+    this.birthFrame = props.birthFrame;
 
     this.upgradeTypes = [
       {
         type: 'extraLife',
+        size: 15,
+        duration: 1,
         image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
         color: '#00c1ff',
       },
@@ -42,19 +82,10 @@ export default class Present {
         image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
         color: '#ffc131',
       },
-      /*
-      {
-        type: 'lazar',
-        size: 30,
-        lastShotLimit: 10,
-        duration: 4,
-        image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
-        color: '#49b975',
-      },
-      */
       {
         type: 'nova',
         duration: 1,
+        size: 15,
         image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
         color: '#fe02c7',
       },
@@ -74,7 +105,7 @@ export default class Present {
       },
     ]
 
-    this.upgradeType = args.upgradeType || 0;
+    this.upgradeType = props.upgradeType || 0;
 
     this.image = new Image();
     this.image.src = this.upgradeTypes[this.upgradeType].image;
@@ -87,7 +118,7 @@ export default class Present {
     })
   }
 
-  inRadar(yes) {
+  inRadar(yes:boolean) {
     if (yes) {
       this.changeAlpha("+");
       if (!this.isInRadar) {
@@ -102,7 +133,7 @@ export default class Present {
       }
     }
   }
-  changeAlpha(direction) {
+  changeAlpha(direction:string) {
     if (this.alpha < 1 && direction === "+" ) {
       this.alpha = this.alpha + 0.02;
     }
@@ -111,40 +142,34 @@ export default class Present {
     }
   }
 
-  selfDestruction() {
-    addInterval('selfDestructionInterval', 20000, selfDestructionExecute)
-
-
-    function selfDestructionExecute() {
-      removeInterval('selfDestructionInterval')
-      classRoot.delete = true;
-
-      // Explode
-      for (let i = 0; i < classRoot.radius; i++) {
-        const particle = new Particle({
-          lifeSpan: randomNumBetween(60, 100),
-          size: randomNumBetween(1, 4),
-          position: {
-            x: classRoot.position.x + randomNumBetween(-classRoot.radius/4, classRoot.radius/4),
-            y: classRoot.position.y + randomNumBetween(-classRoot.radius/4, classRoot.radius/4)
-          },
-          velocity: {
-            x: randomNumBetween(-1.5, 1.5),
-            y: randomNumBetween(-1.5, 1.5)
-          }
-        });
-        classRoot.create(particle, 'particles');
-      }
-
-
-      classRoot.upgrade({
-        type: 'selfDestruction',
+  selfDestruction():void {
+    this.delete = true;
+    // Explode
+    for (let i = 0; i < this.radius; i++) {
+      const particle = new Particle({
+        lifeSpan: randomNumBetween(60, 100),
+        size: randomNumBetween(1, 4),
+        position: {
+          x: this.position.x + randomNumBetween(-this.radius/4, this.radius/4),
+          y: this.position.y + randomNumBetween(-this.radius/4, this.radius/4)
+        },
+        velocity: {
+          x: randomNumBetween(-1.5, 1.5),
+          y: randomNumBetween(-1.5, 1.5)
+        }
       });
+      this.create(particle, 'particles');
     }
+    this.upgrade(      {
+      type: 'expired',
+      size: 100,
+      duration: 17,
+      image: '',
+      color: '#34b3e8',
+    });
   }
 
-  destroy(byWho){
-    removeInterval('selfDestructionInterval')
+  destroy(byWho:string):void {
     this.delete = true;
     this.onSound({
       file: 'upgradeCatch',
@@ -153,12 +178,22 @@ export default class Present {
     this.addScore(this.score);
 
     if (this.alpha > 0) {
-      this.upgrade(this.upgradeTypes[this.upgradeType]);
+
     }
 
   }
+  getUpgrade():void {
+    this.upgrade(this.upgrade(this.upgradeTypes[this.upgradeType]))
+  }
 
-  render(state){
+  render(state:IState, frame?:number):void{
+
+    // Destroy with effects if max age has excided
+    if (frame && this.birthFrame && (frame - this.maxAge) > this.birthFrame) {
+      console.log(this.maxAge, frame)
+      this.selfDestruction()
+    }
+    
     // Move
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
@@ -179,21 +214,23 @@ export default class Present {
     else if(this.position.y < -this.radius) this.position.y = state.screen.height + this.radius;
 
     // Draw
-    const context = state.context;
-    context.save();
-    context.translate(this.position.x, this.position.y);
-    context.rotate(this.rotation * Math.PI / 180);
-    context.strokeStyle = this.color;
-    context.fillStyle = this.color // ef404f
-    context.lineWidth = 2;
-    context.globalAlpha = this.alpha;
-    context.beginPath();
-    context.arc(0, 0, 20, 0, 2 * Math.PI, false);
-    context.stroke();
-    context.fill();
-    context.closePath();
-    context.clip();
-    context.drawImage(this.image, this.radius / 2 * (-1), this.radius / 2 * (-1), 20, 20);
-    context.restore();
+    const { context } = state;
+    if (context) {
+      context.save();
+      context.translate(this.position.x, this.position.y);
+      context.rotate(this.rotation * Math.PI / 180);
+      context.strokeStyle = this.color;
+      context.fillStyle = this.color // ef404f
+      context.lineWidth = 2;
+      context.globalAlpha = this.alpha;
+      context.beginPath();
+      context.arc(0, 0, 20, 0, 2 * Math.PI, false);
+      context.stroke();
+      context.fill();
+      context.closePath();
+      context.clip();
+      context.drawImage(this.image, this.radius / 2 * (-1), this.radius / 2 * (-1), 20, 20);
+      context.restore();
+    }
   }
 }

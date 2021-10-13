@@ -5,16 +5,31 @@ import { actionCreators } from './actions'
 
 import KeyHandler, { KEY } from './keys'
 import ScreenHandler from './screen-handler'
-import {randomNumBetweenExcluding, randomInterger} from './helpers'
+import {randomNumBetweenExcluding, randomInterger, randomNumBetween} from './helpers'
+import {
+  addInterval,
+  removeInterval,
+  clearAllIntervals,
+} from './gameIntervalHandler'
 import { themes } from './color-theme'
+import { updateObjects, collisionBetween, checkCollision } from './processer'
 import Asteroid from './Asteroid'
 import Ship from './Ship'
+import Present from './Present'
+import BoardInit from './boardInit'
+import BoardGameOver from './boardGameOver'
+import BoardGetReady from './boardGetReady'
+import GameBoard from './gameboard/main'
+
 import type { Ikeys } from './keys'
 import type { Iscreen } from './screen-handler'
 import type { IState, CanvasItem, Iposition } from './game.types'
 
 const mapStateToProps = (state:any) => ({
-  gameStatus: state.asteroids.gameStatus
+  gameStatus: state.asteroids.gameStatus,
+  level: state.asteroids.level,
+  lives: state.asteroids.lives,
+  score: state.asteroids.score
 })
 const mapDispatchToProps = (dispatch:any) => ({
   actions: bindActionCreators(actionCreators, dispatch),
@@ -22,7 +37,13 @@ const mapDispatchToProps = (dispatch:any) => ({
 
 type IProps = {
   gameStatus: string
-  actions: { [key: string]: any }
+  score: number
+  actions: {
+    [key: string]: any
+  }
+  level: number,
+  lives: number,
+  shieldFuel: number,
 }
 
 let classRoot = "";
@@ -31,10 +52,12 @@ export class Game extends Component<IProps> {
   canvasRef;
   state:IState;
   canvasItems:CanvasItem[];
+  frame: number;
   constructor(props:IProps) {
     super(props);
     this.canvasRef = React.createRef<HTMLCanvasElement>();
     this.canvasItems = []
+    this.frame = 0
     this.state = {
       screen: {
         width: window.innerWidth,
@@ -50,6 +73,7 @@ export class Game extends Component<IProps> {
         space : false,
         return: false,
         weapon: false,
+        escape: false,
       },
       colorThemeIndex: randomInterger(0, themes.length - 1 ),
       upgradeFuel: 0,
@@ -57,8 +81,7 @@ export class Game extends Component<IProps> {
       hasError: false,
     }
     this.createObject = this.createObject.bind(this)
-    this.checkCollision = this.checkCollision.bind(this)
-    
+
   }
 
   componentDidMount():void {
@@ -66,6 +89,7 @@ export class Game extends Component<IProps> {
       const context = this.canvasRef.current!.getContext('2d');
       this.setState({ context });
     }
+    this.update()
     this.props.actions.updateGameStatus('INITIAL')
   }
 
@@ -73,56 +97,69 @@ export class Game extends Component<IProps> {
     if (prevProps.gameStatus !== this.props.gameStatus) {
       switch (this.props.gameStatus) {
         case 'INITIAL':
-          this.startInitialState()
+          this.generateAsteroids(3)
           break;
         case 'GAME_ON':
+          removeInterval('waitForGetReady')
+          removeInterval('waitForRecovery')
+          this.createShip()
+          this.generatePresent()
           //this.onGame()
           break;
         case 'GAME_START':
-          //this.startGame()
+          this.props.actions.updateLives(2)
+          this.props.actions.updateGameStatus('GAME_ON')
+          break;
+        case 'GAME_ABORT':
+          removeInterval('abortAfterGameOver')
+          this.canvasItems = []
+          this.props.actions.updateGameStatus('INITIAL')
+          break;
+        case 'GAME_RECOVERY':
+          this.removeCanvasItems(['ship'])
+          addInterval('waitForRecovery', 1000, () => {
+            removeInterval('waitForRecovery')
+            this.props.actions.updateGameStatus('GAME_GET_READY')
+          })
           break;
         case 'GAME_GET_READY':
-          //this.startContinue()
-          /*
-          setTimeout(() => {
-            this.setState({
-              readyforNextLife: true,
-            })
-          }, 1000)
-          */
+          removeInterval('waitForRecovery')
+          addInterval('waitForGetReady', 1500, () => {
+            removeInterval('waitForGetReady')
+            this.props.actions.updateGameStatus('GAME_ON')
+          })
           break;
         case 'GAME_OVER':
-          //this.gameOver()
+          addInterval('abortAfterGameOver', 4000, () => {
+            removeInterval('abortAfterGameOver')
+            this.props.actions.updateGameStatus('GAME_ABORT')
+          })
           break;
       }
     }
 
   }
 
-  startInitialState():void {
+  removeCanvasItems(primary:Array<string>) {
+    const haystack = this.canvasItems
+    const primaryArray = haystack.filter(item => primary.indexOf(item.type) < 0)
+    this.canvasItems = primaryArray
 
-    this.update()
-    this.generateAsteroids(3)
-    this.createShip()
   }
-
   generateAsteroids(amount:number) {
-    let ship = this.canvasItems.find(item => item.type === 'ship') || {
-      position: {
-        x: 0,
-        y: 0,
-      } as Iposition
+    let ship = this.canvasItems.find(item => item.type === 'ship' && item.delete === false) || {
+      position: { x: 0, y: 0} as Iposition
     };
 
     for (let i = 0; i < amount; i++) {
       let asteroid = new Asteroid({
         size: 80,
         position: {
-          x: randomNumBetweenExcluding(0, this.state.screen.width, ship.position.x-60, ship.position.x+60),
-          y: randomNumBetweenExcluding(0, this.state.screen.height, ship.position.y-60, ship.position.y+60)
+          x: randomNumBetweenExcluding(0, this.state.screen.width, ship.position.x - 80, ship.position.x + 80),
+          y: randomNumBetweenExcluding(0, this.state.screen.height, ship.position.y - 80, ship.position.y + 80)
         },
         create: this.createObject,
-        addScore: (item:any) => {},
+        addScore: (points:number) => this.props.actions.addScore(points),
         onSound: (item:any) => {},
       });
       this.createObject(asteroid);
@@ -136,92 +173,115 @@ export class Game extends Component<IProps> {
         y: this.state.screen.height/2
       },
       create: this.createObject,
-      onDie: () => {}, //this.checkForLives.bind(this),
-      upgrade: () => {}, //this.upgrade,
-      onSound: () => {}, //this.onSound.bind(this),
+      onDie: () => {},
+      upgrade: () => {},
+      onSound: () => {},
     });
     this.createObject(ship)
     //this.props.actions.updateShieldFuel(0)
   }
+
+  generatePresent() {
+    let ship = this.canvasItems.find(item => item.type === 'ship' && item.delete === false)
+      if (!ship) {
+        return;
+      }
+      let present = new Present({
+        size: 20,
+        birthFrame: this.frame,
+        position: {
+          x: randomNumBetweenExcluding(0, this.state.screen.width, -100, +100),
+          y: randomNumBetweenExcluding(0, this.state.screen.height, -100, +100)
+        },
+        create: this.createObject,
+        addScore: (points:number) => this.props.actions.addScore(points),
+        //upgrade: this.upgrade,
+        //upgradeType: randomInterger(4,4)
+        upgradeType: randomInterger(0,4),
+        maxAge: randomNumBetween(800, 2000),
+        //onSound: this.onSound.bind(this),
+        upgrade: (grade:any) => {console.log('upgrade is: ', grade)},
+        onSound: () => {},
+      });
+      this.createObject(present);
+
+  }
+
+
   createObject(item:CanvasItem):void {
     this.canvasItems.push(item);
   }
-
+  
   update():void {
-
-    const {context, screen} = this.state
+    const {state} = this
+    const {context, screen} = state
     if (context) {
       context.save();
       context.scale(screen.ratio, screen.ratio);
 
       // Motion trail
-      context.fillStyle = themes[this.state.colorThemeIndex].background
+      context.fillStyle = themes[state.colorThemeIndex].background
       context.globalAlpha = 0.4;
       context.fillRect(0, 0, screen.width, screen.height);
       context.globalAlpha = 1;
     }
-    this.collisionBetween('bullet', [ 'asteroid', 'ufo'], (item1:CanvasItem, item2:CanvasItem) => {
+    // Collision bullet with asteroid or ufo
+    collisionBetween(this, 'bullet', [ 'asteroid', 'ufo'], (item1:CanvasItem, item2:CanvasItem) => {
       item1.destroy(item2.type);
       item2.destroy(item1.type);
     })
+    // Collision ship with asteroid or ufo
+    collisionBetween(this, 'ship', [ 'asteroid', 'ufo'], (item1:CanvasItem, item2:CanvasItem) => {
+      item1.destroy(item2.type);
+      item2.destroy(item1.type);
+      if (this.props.lives < 1) {
+        this.props.actions.updateGameStatus('GAME_OVER')
+      } else {
+        this.props.actions.updateLives('-1')
+        this.props.actions.updateGameStatus('GAME_RECOVERY')
+      }
+    })
+    // Collision with present containing upgrades
+    collisionBetween(this, 'ship', [ 'present'], (item1:CanvasItem, item2:CanvasItem) => {
+      item2.getUpgrade();
+      item2.destroy(item1.type);
+    })
+    updateObjects(this.canvasItems, state, this.frame)
 
-    this.collisionBetween('ship', [ 'asteroid', 'ufo'], (item1:CanvasItem, item2:CanvasItem) => {
-      item1.destroy(item2.type);
-      item2.destroy(item1.type);
-    })
-    this.updateObjects()
+    // Instant Key handling
+    if (this.props.gameStatus === 'INITIAL' && state.keys.space) {
+      this.props.actions.updateGameStatus('GAME_START')
+    }
+    if ((this.props.gameStatus === 'GAME_ON' || this.props.gameStatus === 'GAME_OVER') && state.keys.escape) {
+      this.props.actions.updateGameStatus('GAME_ABORT')
+    }
+    if (this.props.gameStatus === 'GAME_GET_READY' && state.keys.space) {
+      this.props.actions.updateGameStatus('GAME_ON')
+    }
+
+    this.frame++;
     requestAnimationFrame(() => {this.update()})
   }
-  updateObjects():void {
-    const items = this.canvasItems
-    let index = 0;
-    for (let item of items) {
-      if (item.delete) {
-        items.splice(index, 1);
-      }else{
-        items[index].render(this.state);
-      }
-      index++;
-    }
-  }
-  collisionBetween(primary:string, secondary:Array<string>, cb:Function):void {
-
-    const haystack = this.canvasItems
-    const primaryArray = haystack.filter(item => item.type === primary)
-    const secondaryArray = haystack.filter(item => secondary.indexOf(item.type) > -1)
-
-    let a = primaryArray.length - 1;
-    let b;
-    for (a; a > -1; --a) {
-      b = secondaryArray.length - 1;
-      for (b; b > -1; --b) {
-        const item1 = primaryArray[a];
-        const item2 = secondaryArray[b];
-        if (item1 && item2 && this.checkCollision(item1, item2)) {
-          cb(item1, item2)
-        }
-      }
-    }
-
-    
-  }
-
-  checkCollision(obj1:CanvasItem, obj2:CanvasItem, distance = 0):boolean {
-    var vx = obj1.position.x - obj2.position.x;
-    var vy = obj1.position.y - obj2.position.y;
-    var length = Math.sqrt(vx * vx + vy * vy);
-    if (length < ((obj1.radius + distance) + (obj2.radius + distance))) {
-      return true;
-    }
-    return false;
-  }
+  
 
   render() {
     const {screen} = this.state
     return (
       <React.Fragment>
         <ScreenHandler cb={(screen:Iscreen) => this.setState({screen})} />
-        <KeyHandler gameStatus={this.props.gameStatus}  keys={this.state.keys} cb={(keys:Ikeys) => this.setState({keys})}/>
+        <KeyHandler keys={this.state.keys} cb={(keys:Ikeys) => this.setState({keys})}/>
+        <BoardInit gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
+        <BoardGameOver gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
+        <BoardGetReady gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
+        <GameBoard
+          gameStatus={this.props.gameStatus}
+          score={this.props.score}
+          colorThemeIndex={this.state.colorThemeIndex}
+          lives={this.props.lives}
+          level={this.props.level}
+          shieldFuel={this.props.shieldFuel}
+          updateUpgradeStatus={0}
+        />
         <canvas
           id="canvas-board"
           ref={this.canvasRef}
