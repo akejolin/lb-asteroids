@@ -36,7 +36,7 @@ export default class Bullet {
       x:(posDelta.x / 2),
       y:(posDelta.y / 2)
     };
-    this.radius = props.size || props.ship.bulletSize;
+    this.radius = props.size || 2;
 
   }
 

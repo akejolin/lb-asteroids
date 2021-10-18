@@ -172,9 +172,9 @@ export class Game extends Component<IProps> {
         x: this.state.screen.width/2,
         y: this.state.screen.height/2
       },
+      birthFrame: this.frame,
       create: this.createObject,
       onDie: () => {},
-      upgrade: () => {},
       onSound: () => {},
     });
     this.createObject(ship)
@@ -195,12 +195,11 @@ export class Game extends Component<IProps> {
         },
         create: this.createObject,
         addScore: (points:number) => this.props.actions.addScore(points),
-        //upgrade: this.upgrade,
+        upgrade: () => {},
         //upgradeType: randomInterger(4,4)
         upgradeType: randomInterger(0,4),
         maxAge: randomNumBetween(800, 2000),
         //onSound: this.onSound.bind(this),
-        upgrade: (grade:any) => {console.log('upgrade is: ', grade)},
         onSound: () => {},
       });
       this.createObject(present);
@@ -241,11 +240,24 @@ export class Game extends Component<IProps> {
         this.props.actions.updateGameStatus('GAME_RECOVERY')
       }
     })
-    // Collision with present containing upgrades
-    collisionBetween(this, 'ship', [ 'present'], (item1:CanvasItem, item2:CanvasItem) => {
-      item2.getUpgrade();
-      item2.destroy(item1.type);
+
+    // Upgrades actions
+    interface ShipItem extends CanvasItem {
+      upgrade: Function,
+    }
+    interface PresentItem extends CanvasItem {
+      getUpgrade: Function,
+    }
+    collisionBetween(this, 'ship', [ 'present'], (ship:ShipItem, present:PresentItem) => {
+        const upgrade = present.getUpgrade();
+        ship.upgrade({
+          upgrade,
+          birthFrame: this.frame
+        })
+        present.destroy(ship.type);
     })
+
+
     updateObjects(this.canvasItems, state, this.frame)
 
     // Instant Key handling

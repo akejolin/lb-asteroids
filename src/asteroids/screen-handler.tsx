@@ -25,7 +25,8 @@ export default ({cb=()=>{}}:IProps) => {
         cb({
           width: window.innerWidth,
           height: window.innerHeight,
-          ratio: window.devicePixelRatio || 1,
+          // ratio: window.devicePixelRatio || 1,
+          ratio: 1,
         })
       }, [])
 

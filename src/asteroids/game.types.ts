@@ -14,6 +14,7 @@ export interface CanvasItem {
   type: string,
   destroy: Function,
   radius: number,
+  getUpgrade?: Function
 }
 
 
