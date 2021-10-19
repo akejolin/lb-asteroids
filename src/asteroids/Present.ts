@@ -65,7 +65,6 @@ export default class Present {
     this.vertices = asteroidVertices(8, props.size)
     this.alpha = 0.1;
     this.onSound = props.onSound;
-    //this.getUpgrade = thgetUpgrade;
     this.upgrade = props.upgrade
     this.maxAge = props.maxAge || 1000;
     this.isInRadar = false

@@ -55,6 +55,7 @@ export default class Ship {
   upgrades: IupgradesObject[];
   upgrade:Function = ({upgrade, birthFrame}:IupgradesObject) => {
     if (Array.isArray(this.upgrades)) {
+      this.upgrades = this.upgrades.filter(item => item.upgrade.type !== upgrade.type)
       this.upgrades.push({upgrade, birthFrame, id: `${upgrade.type}-${new Date()}`})
     }
   };
@@ -172,8 +173,9 @@ export default class Ship {
   render(state:IState, frame: number):void {
 
     if (this.upgrades.length > 0) {
-      const currentWeapond = this.upgrades.find(item => item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets')
-      if (currentWeapond) {
+      const selection = this.upgrades.filter(item => item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets')
+      if (selection.length > 0) {
+        const currentWeapond = selection[selection.length-1]
         this.currentWeapond = currentWeapond.upgrade.type
       }
       // Check if needs to remove upgrade 
@@ -187,8 +189,6 @@ export default class Ship {
           }
         }
       }
-    } else {
-      this.currentWeapond = 'default'
     }
 
     // Controls

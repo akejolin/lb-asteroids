@@ -26,4 +26,5 @@ export interface IState {
   upgradeFuel: number,
   readyforNextLife: boolean,
   hasError: boolean,
+  nextPresentDelay: number,
 }

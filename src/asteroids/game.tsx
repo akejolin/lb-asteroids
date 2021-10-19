@@ -79,6 +79,7 @@ export class Game extends Component<IProps> {
       upgradeFuel: 0,
       readyforNextLife: false,
       hasError: false,
+      nextPresentDelay: randomNumBetween(500, 1000),
     }
     this.createObject = this.createObject.bind(this)
 
@@ -103,7 +104,7 @@ export class Game extends Component<IProps> {
           removeInterval('waitForGetReady')
           removeInterval('waitForRecovery')
           this.createShip()
-          this.generatePresent()
+          //this.generatePresent()
           //this.onGame()
           break;
         case 'GAME_START':
@@ -203,9 +204,7 @@ export class Game extends Component<IProps> {
         onSound: () => {},
       });
       this.createObject(present);
-
   }
-
 
   createObject(item:CanvasItem):void {
     this.canvasItems.push(item);
@@ -241,6 +240,12 @@ export class Game extends Component<IProps> {
       }
     })
 
+    // Generate new present
+    if (this.frame > this.state.nextPresentDelay) {
+      this.generatePresent()
+      this.state.nextPresentDelay = randomNumBetween(Math.floor(this.frame + 400), Math.floor(this.frame + 1000))
+    }
+
     // Upgrades actions
     interface ShipItem extends CanvasItem {
       upgrade: Function,
@@ -248,8 +253,15 @@ export class Game extends Component<IProps> {
     interface PresentItem extends CanvasItem {
       getUpgrade: Function,
     }
-    collisionBetween(this, 'ship', [ 'present'], (ship:ShipItem, present:PresentItem) => {
+    collisionBetween(this, 'ship', [ 'present'], (ship:ShipItem, present:PresentItem):void => {
         const upgrade = present.getUpgrade();
+
+        if (upgrade.type === 'extraLife') {
+          this.props.actions.updateLives('+1')
+          present.destroy(ship.type);
+          return
+        }
+
         ship.upgrade({
           upgrade,
           birthFrame: this.frame

@@ -27,7 +27,7 @@ const resetScore = createAction(RESET_SCORE)
 
 export const UPDATE_LIVES = 'UPDATE_LIVES'
 const _updateLives = createAction(UPDATE_LIVES)
-const updateLives = (data:number) => (dispatch:Function) => dispatch(_updateLives(data))
+const updateLives = (data:number | string) => (dispatch:Function) => dispatch(_updateLives(data))
 
 export const UPDATE_SHIELD_FUEL = 'UPDATE_SHIELD_FUEL'
 const _updateShieldFuel = createAction(UPDATE_SHIELD_FUEL)
