@@ -12,9 +12,13 @@ import {
   clearAllIntervals,
 } from './gameIntervalHandler'
 import { themes } from './color-theme'
-import { updateObjects, collisionBetween, checkCollision } from './processer'
+import {
+  updateObjects,
+  collisionBetween,
+} from './processer'
 import Asteroid from './Asteroid'
 import Ship from './Ship'
+import Shield from './shield'
 import Present from './Present'
 import BoardInit from './boardInit'
 import BoardGameOver from './boardGameOver'
@@ -23,13 +27,15 @@ import GameBoard from './gameboard/main'
 
 import type { Ikeys } from './keys'
 import type { Iscreen } from './screen-handler'
-import type { IState, CanvasItem, Iposition } from './game.types'
+import type { IState, CanvasItem, CanvasItemGroups, Iposition } from './game.types'
 
 const mapStateToProps = (state:any) => ({
   gameStatus: state.asteroids.gameStatus,
   level: state.asteroids.level,
   lives: state.asteroids.lives,
-  score: state.asteroids.score
+  score: state.asteroids.score,
+  upgradeFuel: state.asteroids.upgradeFuel,
+  upgradeFuelTotal: state.asteroids.upgradeFuelTotal,
 })
 const mapDispatchToProps = (dispatch:any) => ({
   actions: bindActionCreators(actionCreators, dispatch),
@@ -43,8 +49,18 @@ type IProps = {
   }
   level: number,
   lives: number,
-  shieldFuel: number,
+  //shieldFuel: number,
+  upgradeFuel: number,
+  upgradeFuelTotal: number,
 }
+
+  // Upgrades actions
+  interface ShipItem extends CanvasItem {
+    upgrade: Function,
+  }
+  interface PresentItem extends CanvasItem {
+    getUpgrade: Function,
+  }
 
 let classRoot = "";
 
@@ -52,12 +68,24 @@ export class Game extends Component<IProps> {
   canvasRef;
   state:IState;
   canvasItems:CanvasItem[];
-  frame: number;
+  canvasItemsGroups: CanvasItemGroups;
+  particles:CanvasItem[];
   constructor(props:IProps) {
     super(props);
     this.canvasRef = React.createRef<HTMLCanvasElement>();
     this.canvasItems = []
-    this.frame = 0
+    this.canvasItemsGroups = {
+      asteroids: [],
+      particles: [],
+      ships: [],
+      shields: [],
+      bullets: [],
+      presents: [],
+      ufos: [],
+      others: [],
+    }
+
+    this.particles = []
     this.state = {
       screen: {
         width: window.innerWidth,
@@ -91,7 +119,15 @@ export class Game extends Component<IProps> {
       this.setState({ context });
     }
     this.update()
+    
+
     this.props.actions.updateGameStatus('INITIAL')
+  }
+
+  componentWillUnmount():void {
+    clearAllIntervals()
+    this.removeAllCanvasItems()
+    this.props.actions.updateGameStatus('STOPPED')
   }
 
   componentDidUpdate(prevProps: IProps, prevState:IState):void {
@@ -103,17 +139,19 @@ export class Game extends Component<IProps> {
         case 'GAME_ON':
           removeInterval('waitForGetReady')
           removeInterval('waitForRecovery')
+          clearAllIntervals()
           this.createShip()
-          //this.generatePresent()
-          //this.onGame()
           break;
         case 'GAME_START':
+          clearAllIntervals()
+          this.removeAllCanvasItems()
+          this.generateAsteroids(3)
           this.props.actions.updateLives(2)
           this.props.actions.updateGameStatus('GAME_ON')
           break;
         case 'GAME_ABORT':
           removeInterval('abortAfterGameOver')
-          this.canvasItems = []
+          this.removeAllCanvasItems()
           this.props.actions.updateGameStatus('INITIAL')
           break;
         case 'GAME_RECOVERY':
@@ -142,13 +180,18 @@ export class Game extends Component<IProps> {
   }
 
   removeCanvasItems(primary:Array<string>) {
-    const haystack = this.canvasItems
-    const primaryArray = haystack.filter(item => primary.indexOf(item.type) < 0)
-    this.canvasItems = primaryArray
-
+    primary.forEach(element => {
+      this.canvasItemsGroups[`${element}s`].splice(0, this.canvasItemsGroups[`${element}s`].length)
+    });
+  }
+  removeAllCanvasItems() {
+    const targets = this.canvasItemsGroups
+    for (let key in targets) {
+      targets[key].splice(0,targets[key].length)
+    };
   }
   generateAsteroids(amount:number) {
-    let ship = this.canvasItems.find(item => item.type === 'ship' && item.delete === false) || {
+    let ship = this.canvasItemsGroups['ships'].find(item => item.type === 'ship' && item.delete === false) || {
       position: { x: 0, y: 0} as Iposition
     };
 
@@ -163,33 +206,32 @@ export class Game extends Component<IProps> {
         addScore: (points:number) => this.props.actions.addScore(points),
         onSound: (item:any) => {},
       });
-      this.createObject(asteroid);
+      this.createObject(asteroid, 'asteroids');
     }
   }
   createShip() {
-    
     let ship = new Ship({
       position: {
         x: this.state.screen.width/2,
         y: this.state.screen.height/2
       },
-      birthFrame: this.frame,
       create: this.createObject,
       onDie: () => {},
       onSound: () => {},
+      updateUpgradeFuel: (data:any) => {
+        return this.props.actions.updateUpgradeFuel(data)},
     });
-    this.createObject(ship)
+    this.createObject(ship, 'ships')
     //this.props.actions.updateShieldFuel(0)
   }
 
   generatePresent() {
-    let ship = this.canvasItems.find(item => item.type === 'ship' && item.delete === false)
+    let ship = this.canvasItemsGroups['ships'].find(item => item.type === 'ship' && item.delete === false)
       if (!ship) {
         return;
       }
       let present = new Present({
         size: 20,
-        birthFrame: this.frame,
         position: {
           x: randomNumBetweenExcluding(0, this.state.screen.width, -100, +100),
           y: randomNumBetweenExcluding(0, this.state.screen.height, -100, +100)
@@ -198,19 +240,91 @@ export class Game extends Component<IProps> {
         addScore: (points:number) => this.props.actions.addScore(points),
         upgrade: () => {},
         //upgradeType: randomInterger(4,4)
-        upgradeType: randomInterger(0,4),
-        maxAge: randomNumBetween(800, 2000),
+        upgradeType: randomInterger(1,1),
         //onSound: this.onSound.bind(this),
         onSound: () => {},
       });
-      this.createObject(present);
+      this.createObject(present, 'presents');
   }
 
-  createObject(item:CanvasItem):void {
-    this.canvasItems.push(item);
+  generateShield() {
+    let ship = this.canvasItemsGroups['ships'].find(i => i.type === 'ship');
+    if (!ship) {
+      return;
+    }
+    let shield = new Shield({
+      position: {
+        x: randomNumBetweenExcluding(0, this.state.screen.width, -100, +100),
+        y: randomNumBetweenExcluding(0, this.state.screen.height, -100, +100)
+      },
+      create: this.createObject.bind(this),
+      ship: ship,
+      updateShieldFuel: this.props.actions.updateShieldFuel,
+      onSound: () => {} //this.onSound.bind(this)
+    })
+    this.createObject(shield, 'shields');
   }
-  
+
+  createObject(item:CanvasItem, group:string = 'asteroids'):void {
+    this.canvasItemsGroups[group].push(item);
+  }
+  collisionWithBullet(item1:CanvasItem, item2:CanvasItem):void {
+    item1.destroy(item2.type);
+    item2.destroy(item1.type);
+  }
+  collisionWithShip(item1:CanvasItem, item2:CanvasItem):void {
+    item1.destroy(item2.type);
+    item2.destroy(item1.type);
+    if (this.props.lives < 1) {
+      this.props.actions.updateGameStatus('GAME_OVER')
+    } else {
+      this.props.actions.updateLives('-1')
+      this.props.actions.updateGameStatus('GAME_RECOVERY')
+    }
+  }
+
+
+  collisionWithPresent(ship:ShipItem, present:PresentItem):void {
+    const upgrade = present.getUpgrade();
+    // Extralife
+    switch(upgrade.type) {
+      case 'extraLife':
+        this.props.actions.updateLives('+1')
+        present.destroy(ship.type);        
+      break;
+      case 'nova':
+        
+        const primaryArray = this.canvasItemsGroups['asteroids'] //this.canvasItems.filter(item => item.type === 'asteroid')
+        
+        let i = 0;
+        const len:number = primaryArray.length 
+        let limit = len < 12 ? len : randomInterger(Math.floor(len * 0.75), len-1)
+        primaryArray.forEach(item => {
+          i++
+          if (i > limit) {
+            return null
+          }
+          item.destroy('nova')
+        })
+        //this.ufos.forEach(item => {
+        //  item.destroy('nova')
+        //})
+        // this.onSound({
+        //   file: 'nova',
+        //   status: 'PLAYING'
+        // })
+      break;
+      case 'biggerBullets':
+      case 'triple':
+        ship.upgrade({
+          upgrade,
+        })
+      break;
+    }
+    present.destroy(ship.type);
+}
   update():void {
+    
     const {state} = this
     const {context, screen} = state
     if (context) {
@@ -219,58 +333,30 @@ export class Game extends Component<IProps> {
 
       // Motion trail
       context.fillStyle = themes[state.colorThemeIndex].background
-      context.globalAlpha = 0.4;
+      context.globalAlpha = 0.7;
       context.fillRect(0, 0, screen.width, screen.height);
       context.globalAlpha = 1;
     }
     // Collision bullet with asteroid or ufo
-    collisionBetween(this, 'bullet', [ 'asteroid', 'ufo'], (item1:CanvasItem, item2:CanvasItem) => {
-      item1.destroy(item2.type);
-      item2.destroy(item1.type);
-    })
+    collisionBetween(this.canvasItemsGroups, 'bullet', [ 'asteroid', 'ufo'], this.collisionWithBullet.bind(this))
     // Collision ship with asteroid or ufo
-    collisionBetween(this, 'ship', [ 'asteroid', 'ufo'], (item1:CanvasItem, item2:CanvasItem) => {
-      item1.destroy(item2.type);
-      item2.destroy(item1.type);
-      if (this.props.lives < 1) {
-        this.props.actions.updateGameStatus('GAME_OVER')
-      } else {
-        this.props.actions.updateLives('-1')
-        this.props.actions.updateGameStatus('GAME_RECOVERY')
-      }
-    })
+    collisionBetween(this.canvasItemsGroups, 'ship', [ 'asteroid', 'ufo'], this.collisionWithShip.bind(this))
+    // Collision ship with present
+    collisionBetween(this.canvasItemsGroups, 'ship', [ 'present'], this.collisionWithPresent.bind(this))
 
     // Generate new present
-    if (this.frame > this.state.nextPresentDelay) {
-      this.generatePresent()
-      this.state.nextPresentDelay = randomNumBetween(Math.floor(this.frame + 400), Math.floor(this.frame + 1000))
+    if (this.state.nextPresentDelay-- < 0){
+      this.state.nextPresentDelay = randomNumBetween(400, 1000)
+      this.generatePresent()  
+      
     }
 
-    // Upgrades actions
-    interface ShipItem extends CanvasItem {
-      upgrade: Function,
-    }
-    interface PresentItem extends CanvasItem {
-      getUpgrade: Function,
-    }
-    collisionBetween(this, 'ship', [ 'present'], (ship:ShipItem, present:PresentItem):void => {
-        const upgrade = present.getUpgrade();
-
-        if (upgrade.type === 'extraLife') {
-          this.props.actions.updateLives('+1')
-          present.destroy(ship.type);
-          return
-        }
-
-        ship.upgrade({
-          upgrade,
-          birthFrame: this.frame
-        })
-        present.destroy(ship.type);
-    })
+    
 
 
-    updateObjects(this.canvasItems, state, this.frame)
+    updateObjects(this.canvasItemsGroups, this.state)
+
+    //updateObjects(this.particles, state)
 
     // Instant Key handling
     if (this.props.gameStatus === 'INITIAL' && state.keys.space) {
@@ -283,12 +369,16 @@ export class Game extends Component<IProps> {
       this.props.actions.updateGameStatus('GAME_ON')
     }
 
-    this.frame++;
-    requestAnimationFrame(() => {this.update()})
+   //this.frame++;
+    if (this.props.gameStatus !== 'STOPPED') {
+      requestAnimationFrame(() => this.update())
+    }
+    
   }
   
 
   render() {
+ 
     const {screen} = this.state
     return (
       <React.Fragment>
@@ -304,7 +394,8 @@ export class Game extends Component<IProps> {
           lives={this.props.lives}
           level={this.props.level}
           shieldFuel={this.props.shieldFuel}
-          updateUpgradeStatus={0}
+          upgradeFuel={this.props.upgradeFuel}
+          upgradeFuelTotal={this.props.upgradeFuelTotal}
         />
         <canvas
           id="canvas-board"

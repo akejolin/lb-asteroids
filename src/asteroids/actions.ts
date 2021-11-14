@@ -35,7 +35,7 @@ const updateShieldFuel = (data:number) => (dispatch:Function) => dispatch(_updat
 
 export const UPDATE_UPGRADE_FUEL = 'UPDATE_UPGRADE_FUEL'
 const _updateUpgradeFuel = createAction(UPDATE_UPGRADE_FUEL)
-const updateUpgradeFuel = (data:number) => (dispatch:Function) => dispatch(_updateUpgradeFuel(data))
+const updateUpgradeFuel = (data: {data:number, total: number}) => (dispatch:Function) => dispatch(_updateUpgradeFuel(data))
 
 export const UPDATE_HIGHSCORE = 'UPDATE_HIGHSCORE'
 const _updateHighscore = createAction(UPDATE_HIGHSCORE)

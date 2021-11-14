@@ -73,9 +73,10 @@ export default class Asteroid {
     this.delete = true;
     this.addScore(this.score);
     // Explode
-    for (let i = 0; i < this.radius; i++) {
+    const runs = 8
+    for (let i = 0; i < runs; i++) {
       const particle = new Particle({
-        lifeSpan: randomNumBetween(60, 100),
+        lifeSpan: randomNumBetween(10, 30),
         size: randomNumBetween(1, 3),
         position: {
           x: this.position.x + randomNumBetween(-this.radius/4, this.radius/4),
@@ -86,7 +87,7 @@ export default class Asteroid {
           y: randomNumBetween(-1.5, 1.5)
         },
       });
-      this.create(particle);
+      this.create(particle, 'particles');
     }
 
     // Break into smaller asteroids

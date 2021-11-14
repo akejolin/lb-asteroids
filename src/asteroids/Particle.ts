@@ -28,12 +28,13 @@ export interface Iprops {
     this.velocity = props.velocity
     this.radius = props.size;
     this.lifeSpan = props.lifeSpan;
-    this.inertia = 0.98;
+    this.inertia = 0.78;
     this.delete = false;
   }
 
   destroy(byWho?:string){
     this.delete = true;
+    console.log('destroyed: ', this.delete)
   }
 
   render(state:IState){
@@ -44,9 +45,9 @@ export interface Iprops {
     this.velocity.y *= this.inertia;
 
     // Shrink
-    this.radius -= 0.1;
-    if(this.radius < 0.1) {
-      this.radius = 0.1;
+    this.radius -= 0.15;
+    if(this.radius < 0.15) {
+      this.radius = 0.15;
     }
     if(this.lifeSpan-- < 0){
       this.destroy()

@@ -11,7 +11,8 @@ type ComponentProps = {
   level: number,
   lives: number,
   shieldFuel: number,
-  updateUpgradeStatus: number,
+  upgradeFuel: number,
+  upgradeFuelTotal: number,
 }
 
 
@@ -46,7 +47,7 @@ export default (props: ComponentProps) => {
               </div>
               <div style={{marginLeft: 16}}>Upgrade:</div>
               <div style={{marginRight: 8}}>
-                <ProcentBar value={props.updateUpgradeStatus} total={17} />
+                <ProcentBar value={props.upgradeFuel} total={props.upgradeFuelTotal} />
               </div>
             </FlexView>
         </FlexView>

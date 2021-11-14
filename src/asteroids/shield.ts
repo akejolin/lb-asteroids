@@ -1,42 +1,66 @@
 import Particle from './Particle';
 import { asteroidVertices, randomNumBetween } from './helpers';
 import { addInterval, removeInterval } from './gameIntervalHandler'
+import type { IState, Iposition, CanvasItem} from './game.types'
 
 let classRoot = this;
+export interface Iprops {
+  position:Iposition,
+  onSound:Function,
+  create:Function,
+  ship:CanvasItem,
+  updateShieldFuel:Function,
+}
+export interface IShield extends CanvasItem {}
+
 export default class Shield {
-  constructor(args) {
-    this.objectType = 'shield'
-    classRoot = this;
-    this.position = args.position
+  type:string;
+  velocity: Iposition;
+  position: Iposition;
+  onSound: Function;
+  create:Function;
+  radius: number;
+  vertices;
+  color:string;
+  alpha:number;
+  ship;
+  fuel:number;
+  isActive:boolean;
+  delete:boolean;
+
+  constructor(props:Iprops) {
+    this.type = 'shield'
+    this.position = props.position
     this.velocity = {
       x: randomNumBetween(-1.5, 1.5),
       y: randomNumBetween(-1.5, 1.5)
     }
-    this.onSound = args.onSound
-    this.radius = args.size;
-    this.create = args.create;
-    this.vertices = asteroidVertices(8, args.size)
+    this.onSound = props.onSound
+    this.radius = 40;
+    this.create = props.create;
+    this.vertices = asteroidVertices(8, 40)
     this.color = '#FFFFFF';
     this.alpha = 0;
-    this.ship = args.ship;
-    this.upgrade = args.upgrade;
+    this.ship = props.ship;
+    //this.upgrade = props.upgrade;
     this.type = 'default'
-    this.topRoot = args.topRoot
+    //this.topRoot = props.topRoot
     this.fuel = 500
-    this.updateShieldFuel = args.updateShieldFuel
+    //this.updateShieldFuel = props.updateShieldFuel
     this.isActive = false
-    this.updateShieldFuel(this.fuel)
+    this.delete = false;
+    //this.updateShieldFuel(this.fuel)
   }
   selfDestruction() {
 
   }
-  destroy(byWho) {
+  destroy(byWho:string) {
     removeInterval('ShieldSelfDestructionInterval')
     this.updateShieldFuel(0)
     this.delete = true
   }
 
-  render(state) {
+  render(state:IState) {
 
     if (this.fuel <= 0) {
       this.destroy('noFuel')
@@ -64,7 +88,8 @@ export default class Shield {
     this.position.y = this.ship.position.y;
 
 
-    function circle(ctx, x, y, r, c) {
+
+    const circle = (ctx:CanvasRenderingContext2D, x:number, y:number, r:number, c:string) => {
       ctx.beginPath()
       var rad = ctx.createRadialGradient(x, y, 1, x, y, r)
       rad.addColorStop(0.7, 'rgba('+c+',0)')
@@ -73,16 +98,18 @@ export default class Shield {
       ctx.arc(x, y, r, 0, Math.PI*2, false)
       ctx.closePath()
       ctx.fill()
-      context.strokeStyle = classRoot.color
-      context.stroke()
+      ctx.strokeStyle = this.color
+      ctx.stroke()
+    }
+    const context = state.context
+    if (!context) {
+      return
     }
 
-
     // Draw
-    const context = state.context
     context.save()
     context.translate(this.position.x, this.position.y)
-    context.rotate(this.rotation * Math.PI / 180)
+    //context.rotate(1 * Math.PI / 180) // this.rotation
 
     context.lineWidth = 2
     context.globalAlpha = this.alpha

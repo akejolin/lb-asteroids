@@ -17,12 +17,12 @@ export interface Iprops {
   onDie: Function,
   currentWeapond?: string,
   lastShotLimit?: number,
-  birthFrame: number,
+  updateUpgradeFuel: Function,
 }
 
 export interface IupgradesObject {
   upgrade: IupgradeType,
-  birthFrame: number,
+  lifeSpan: number,
   id: string,
 }
 
@@ -45,18 +45,22 @@ export default class Ship {
   onSound: Function;
   create: Function;
   onDie: Function;
+  updateUpgradeFuel: Function;
   lastShot: number;
   lastShotLimit: number;
   delete: boolean;
   imgShip: HTMLImageElement;
   useLazar: boolean;
   useTripleBullets: boolean;
-  birthFrame: Number;
   upgrades: IupgradesObject[];
-  upgrade:Function = ({upgrade, birthFrame}:IupgradesObject) => {
+  upgrade:Function = ({upgrade}:IupgradesObject) => {
     if (Array.isArray(this.upgrades)) {
       this.upgrades = this.upgrades.filter(item => item.upgrade.type !== upgrade.type)
-      this.upgrades.push({upgrade, birthFrame, id: `${upgrade.type}-${new Date()}`})
+      this.upgrades.push({
+        upgrade,
+        id: `${upgrade.type}-${new Date()}`,
+        lifeSpan: upgrade.duration,
+      })
     }
   };
   clearUpgrade:Function = ({id:string}:IupgradesObject) => {
@@ -101,8 +105,9 @@ export default class Ship {
     this.inertia = 0.99;
     this.radius = 20;
     this.lastShot = 0;
-    this.lastShotLimit = props.lastShotLimit || 100
+    this.lastShotLimit = props.lastShotLimit || 170
     this.create = props.create;
+    this.updateUpgradeFuel = props.updateUpgradeFuel;
     this.onDie = props.onDie;
     this.imgShip = new Image();
     this.useLazar = false
@@ -110,7 +115,6 @@ export default class Ship {
     this.imgShip.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjEuMyAzOC43IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMS4zIDM4Ljc7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48c3R5bGUgdHlwZT0idGV4dC9jc3MiPi5zdDB7ZmlsbDojRkZGRkZGO30uc3Qxe2ZpbGw6bm9uZTt9PC9zdHlsZT48Zz48cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTguOSwyM2MyLjMsNC43LDIuNiw5LjcsMS4zLDE1Yy0xLjUtMS4zLTIuOS0yLjUtNC4zLTMuN2MtMC40LTAuMy0wLjItMC43LTAuMS0xLjFDMTcsMjkuOSwxNy45LDI2LjUsMTguOSwyM3oiLz48cGF0aCBjbGFzcz0ic3QwIiBkPSJNMS4yLDM4Qy0wLjEsMzIuOCwwLDI4LDIuNywyMy4zYzAuNiwxLjIsMC43LDIuNCwxLDMuNmMwLjYsMi4xLDEuMiw0LjIsMS45LDYuM2MwLjIsMC41LDAuMiwwLjktMC4yLDEuM0M0LDM1LjYsMi43LDM2LjcsMS4yLDM4eiIvPjxnPjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0xMy4zLDIuNGMtMi45LTIuNS0yLjQtMi4yLTUtMC4yYy0zLjgsMy4xLTYsNy4xLTUuOCwxMi4xQzMsMjEuMyw1LDI3LjksNy4xLDM0LjZjMC4yLDAuNiwwLjQsMC44LDEuMSwwLjZjMS43LTAuNiwzLjUtMC42LDUuMiwwYzAuNywwLjIsMC45LDAsMS4xLTAuNmMwLjUtMS42LDEtMy4yLDEuNS00LjhjMS40LTUuMSwyLjgtMTAuMiwyLjktMTMuOEMxOSw5LjMsMTYuOSw1LjUsMTMuMywyLjR6IE03LjcsNC44bC0zLjUsOUM0LjcsMTAuNSw2LjEsNy42LDcuNyw0Ljh6IE0xMC43LDE4LjhjLTIuMSwwLTMuNy0xLjYtMy44LTMuN2MwLTIsMS43LTMuNywzLjgtMy43YzIuMSwwLDMuNywxLjUsMy43LDMuN0MxNC41LDE3LjMsMTIuOSwxOC44LDEwLjcsMTguOHoiLz48cGF0aCBjbGFzcz0ic3QxIiBkPSJNMTAuOCwxMS40Yy0yLjEsMC0zLjksMS43LTMuOCwzLjdjMCwyLDEuNywzLjYsMy44LDMuN2MyLjIsMCwzLjgtMS41LDMuOC0zLjdDMTQuNSwxMi45LDEzLDExLjQsMTAuOCwxMS40eiBNMTIuNywxNS42bC0wLjctMi40QzEyLjgsMTMuOCwxMywxNC40LDEyLjcsMTUuNnoiLz48cGF0aCBjbGFzcz0ic3QxIiBkPSJNNC4zLDEzLjhsMy41LTlDNi4xLDcuNiw0LjcsMTAuNSw0LjMsMTMuOHoiLz48cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTEuOSwxMy4ybDAuNywyLjRDMTMsMTQuNCwxMi44LDEzLjgsMTEuOSwxMy4yeiIvPjwvZz48L2c+PC9zdmc+';
     this.delete = false
     this.upgrades = []
-    this.birthFrame = props.birthFrame
 
 
   }
@@ -123,9 +127,9 @@ export default class Ship {
     })
     this.onDie();
     // Explode
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 20; i++) {
       const particle = new Particle({
-        lifeSpan: randomNumBetween(60, 100),
+        lifeSpan: randomNumBetween(10, 30),
         size: randomNumBetween(1, 4),
         position: {
           x: this.position.x + randomNumBetween(-this.radius/4, this.radius/4),
@@ -136,7 +140,7 @@ export default class Ship {
           y: randomNumBetween(-1.5, 1.5)
         }
       });
-      this.create(particle);
+      this.create(particle, 'particles');
     }
   }
 
@@ -156,8 +160,8 @@ export default class Ship {
     // Thruster particles
     let posDelta = rotatePoint({x:0, y:-10}, {x:0,y:0}, (this.rotation-180) * Math.PI / 180);
     const particle = new Particle({
-      lifeSpan: randomNumBetween(20, 40),
-      size: randomNumBetween(1, 3),
+      lifeSpan: randomNumBetween(5, 10),
+      size: randomNumBetween(0.5, 2),
       position: {
         x: this.position.x + posDelta.x + randomNumBetween(-2, 2),
         y: this.position.y + posDelta.y + randomNumBetween(-2, 2)
@@ -167,11 +171,13 @@ export default class Ship {
         y: posDelta.y / randomNumBetween(3, 5)
       }
     });
-    this.create(particle);
+    //this.create(particle);
+    this.create(particle, 'particles');
   }
 
-  render(state:IState, frame: number):void {
+  render(state:IState):void {
 
+ 
     if (this.upgrades.length > 0) {
       const selection = this.upgrades.filter(item => item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets')
       if (selection.length > 0) {
@@ -179,16 +185,27 @@ export default class Ship {
         this.currentWeapond = currentWeapond.upgrade.type
       }
       // Check if needs to remove upgrade 
+      
       const items = this.upgrades;
       let index = 0;
+      
       for (let item of items) {
-        if (item.birthFrame + item.upgrade.duration < frame) {
+        if (item.lifeSpan-- < 0) { 
           items.splice(index, 1);
           if (item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets') {
             this.currentWeapond = 'default'
           }
+        } else {
+          if (item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets') {
+            this.updateUpgradeFuel({
+              data: item.lifeSpan,
+              total: item.upgrade.duration
+            })
+          } 
         }
+        index++;
       }
+      
     }
 
     // Controls
@@ -208,9 +225,9 @@ export default class Ship {
         const bulletLeft = new Bullet({ship: this, additionalRotation: -10});
         const bulletRight = new Bullet({ ship: this, additionalRotation: 10});
         const bullet = new Bullet({ ship: this });
-        this.create(bulletLeft);
-        this.create(bulletRight);
-        this.create(bullet);
+        this.create(bulletLeft, 'bullets');
+        this.create(bulletRight, 'bullets');
+        this.create(bullet, 'bullets');
       }
 
       if (this.currentWeapond === 'default' || this.currentWeapond === 'biggerBullets' ) {
@@ -218,7 +235,7 @@ export default class Ship {
           ship: this,
           size: this.weapond[this.currentWeapond].size,
         })
-        this.create(bullet);
+        this.create(bullet, 'bullets');
       }
 
       this.lastShot = Date.now();

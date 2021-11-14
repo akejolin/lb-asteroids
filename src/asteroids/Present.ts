@@ -10,8 +10,6 @@ export interface Iprops {
   addScore: Function,
   onSound: Function,
   upgradeType: number,
-  maxAge: number,
-  birthFrame: number,
   upgrade: Function,
 }
 
@@ -43,8 +41,7 @@ export default class Present {
   upgradeTypes:IupgradeType[];
   upgradeType: number;
   color;
-  maxAge;
-  birthFrame;
+  lifeSpan:number;
 
   getUpgrade = ():IupgradeType => this.upgradeTypes[this.upgradeType]
 
@@ -66,9 +63,8 @@ export default class Present {
     this.alpha = 0.1;
     this.onSound = props.onSound;
     this.upgrade = props.upgrade
-    this.maxAge = props.maxAge || 1000;
     this.isInRadar = false
-    this.birthFrame = props.birthFrame;
+    this.lifeSpan = randomNumBetween(800, 2000),
 
     this.upgradeTypes = [
       {
@@ -81,7 +77,7 @@ export default class Present {
       {
         type: 'biggerBullets',
         size: 15,
-        duration: 1000,
+        duration: 700,
         image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
         color: '#ffc131',
       },
@@ -151,7 +147,7 @@ export default class Present {
     // Explode
     for (let i = 0; i < this.radius; i++) {
       const particle = new Particle({
-        lifeSpan: randomNumBetween(60, 100),
+        lifeSpan: randomNumBetween(15, 30),
         size: randomNumBetween(1, 4),
         position: {
           x: this.position.x + randomNumBetween(-this.radius/4, this.radius/4),
@@ -180,10 +176,10 @@ export default class Present {
 
   }
 
-  render(state:IState, frame?:number):void{
+  render(state:IState):void{
 
     // Destroy with effects if max age has excided
-    if (frame && this.birthFrame && (frame - this.maxAge) > this.birthFrame) {
+    if (this.lifeSpan-- < 0){
       this.selfDestruction()
     }
     

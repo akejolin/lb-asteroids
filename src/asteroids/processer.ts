@@ -1,18 +1,19 @@
-import type { IState, CanvasItem, Iposition } from './game.types'
-import { themes } from './color-theme'
+import type { IState, CanvasItem, CanvasItemGroups } from './game.types'
 
-export const updateObjects = (items:CanvasItem[], state:IState, frame?:number):void => {
-    //const items = this.canvasItems
+export const updateObjects = (targets:CanvasItemGroups, state:IState):void => {
+  for (let key in targets) {
     let index = 0;
+    const items = targets[key];
     for (let item of items) {
       if (item.delete) {
         items.splice(index, 1);
-      }else{
-        items[index].render(state, frame);
+      } else{
+        items[index].render(state);
       }
       index++;
     }
   }
+}
 
   export const checkCollision = (obj1:CanvasItem, obj2:CanvasItem, distance = 0):boolean => {
     var vx = obj1.position.x - obj2.position.x;
@@ -23,11 +24,19 @@ export const updateObjects = (items:CanvasItem[], state:IState, frame?:number):v
     }
     return false;
   }
-  
-  export const collisionBetween = (target:any, primary:string, secondary:Array<string>, cb:Function):void => {
-    const haystack:CanvasItem[] = target.canvasItems
-    const primaryArray = haystack.filter(item => item.type === primary)
-    const secondaryArray = haystack.filter(item => secondary.indexOf(item.type) > -1)
+
+  export const collisionBetween = (
+    haystack:CanvasItemGroups,
+    primary:string,
+    secondary:Array<string>,
+    cb:Function
+  ):void => {
+   
+    const primaryArray:CanvasItem[] = haystack[`${primary}s`]
+    let secondaryArray:CanvasItem[] = []
+    secondary.forEach(element => {
+      secondaryArray.push(...haystack[`${element}s`])
+    });
     let a = primaryArray.length - 1;
     let b;
     for (a; a > -1; --a) {

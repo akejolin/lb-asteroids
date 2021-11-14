@@ -17,6 +17,20 @@ export interface CanvasItem {
   getUpgrade?: Function
 }
 
+export interface CanvasItemGroups {
+  [key: string]: CanvasItem[]
+  /*
+  asteroids: CanvasItem[] | [],
+  particles: CanvasItem[] | [],
+  ships: CanvasItem[] | [],
+  shields: CanvasItem[] | [],
+  presents: CanvasItem[] | [], 
+  bullets: CanvasItem[] | [],
+  ufos: CanvasItem[] | [],
+  others: CanvasItem[] | [],
+  */
+}
+
 
 export interface IState {
   screen: Iscreen,

@@ -28,10 +28,11 @@ const initialState = {
   shield: false,
   shieldFuel: 0,
   upgradeFuel: 0,
+  upgradeFuelTotal: 0,
   updateUpgradeStatus: 0,
   selectedColorTheme: randomInterger(0, themes.length - 1 ),
-  highscore: 0,//getHighscore(),
-  highscoreList: [],//sortArray(getHighscoreList(), 'score', 'DESC'),
+  highscore: 0,
+  highscoreList: [],
   rank: 5,
   resultsCalculated: false,
 }
@@ -101,7 +102,8 @@ export const Asteroids = (state = initialState, { type, payload }:{type: string,
       case actions.UPDATE_UPGRADE_FUEL:
         return {
           ...state,
-          upgradeFuel: Number(payload),
+          upgradeFuel: Number(payload.data),
+          upgradeFuelTotal: Number(payload.total),
         }
         break
       case actions.UPDATE_LIVES:
