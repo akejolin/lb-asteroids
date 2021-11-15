@@ -25,6 +25,7 @@ import BoardGameOver from './boardGameOver'
 import BoardGetReady from './boardGetReady'
 import GameBoard from './gameboard/main'
 import Canvas from './canvas'
+import { superNova } from './nova'
 
 import type { Ikeys } from './keys'
 import type { Iscreen } from './screen-handler'
@@ -250,7 +251,7 @@ export class Game extends Component<IProps> {
         addScore: this.addScore.bind(this),
         upgrade: () => {},
         // upgradeType: randomInterger(4,4)
-        upgradeType: randomInterger(4,4),
+        upgradeType: randomInterger(2,2),
         // onSound: this.onSound.bind(this),
         onSound: () => {},
       });
@@ -310,19 +311,9 @@ export class Game extends Component<IProps> {
         present.destroy(ship.type);        
       break;
       case 'nova':
-        
-        const primaryArray = this.canvasItemsGroups['asteroids'] //this.canvasItems.filter(item => item.type === 'asteroid')
-        
-        let i = 0;
-        const len:number = primaryArray.length 
-        let limit = len < 12 ? len : randomInterger(Math.floor(len * 0.75), len-1)
-        primaryArray.forEach(item => {
-          i++
-          if (i > limit) {
-            return null
-          }
-          item.destroy('nova')
-        })
+        const primaryArray = this.canvasItemsGroups['asteroids']
+        superNova(primaryArray)
+
         //this.ufos.forEach(item => {
         //  item.destroy('nova')
         //})

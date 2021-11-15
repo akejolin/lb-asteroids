@@ -47,28 +47,6 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
     }
     return false;
   }
-/*
-  const action = (haystack:CanvasItemGroups,item:collisionObject) => new Promise((resolve, reject) => {
-
-    // Slow down the loop process to not overload memory
-    const delay = 0
-    setTimeout(async () => {
-      try {
-        const res = await collisionBetween(haystack, item.primary, item.secondary, item.cb)
-        resolve(res)
-      } catch(error) {
-        reject()
-      }
-    }, delay)
-  })
-
-  export const collisionBetweens = async (haystack:CanvasItemGroups, array:collisionObject[]) => {
-    await array.reduce((accumulate, item) => {
-      return accumulate.then(() => action(haystack, item))
-    }, Promise.resolve())
-  }
-  */
-
 
   export const collisionBetweens = (haystack:CanvasItemGroups, array:collisionObject[]) => {
     const promises = array.map(item => {

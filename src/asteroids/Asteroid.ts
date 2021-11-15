@@ -92,7 +92,7 @@ export default class Asteroid {
     // Break into smaller asteroids
     const len = byWho === 'shield' ? 1 : 2
 
-    if (this.radius > 10 && byWho !== 'nova'){
+    if (this.radius > 10){
       for (let i = 0; i < len; i++) {
         let asteroid = new Asteroid({
 
