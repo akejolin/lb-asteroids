@@ -35,6 +35,7 @@ const mapStateToProps = (state:any) => ({
   lives: state.asteroids.lives,
   score: state.asteroids.score,
   upgradeFuel: state.asteroids.upgradeFuel,
+  shieldFuel: state.asteroids.shieldFuel,
   upgradeFuelTotal: state.asteroids.upgradeFuelTotal,
 })
 const mapDispatchToProps = (dispatch:any) => ({
@@ -70,6 +71,7 @@ export class Game extends Component<IProps> {
   canvasItems:CanvasItem[];
   canvasItemsGroups: CanvasItemGroups;
   particles:CanvasItem[];
+  fps = 60;
   constructor(props:IProps) {
     super(props);
     this.canvasRef = React.createRef<HTMLCanvasElement>();
@@ -107,10 +109,10 @@ export class Game extends Component<IProps> {
       upgradeFuel: 0,
       readyforNextLife: false,
       hasError: false,
-      nextPresentDelay: randomNumBetween(500, 1000),
+      //nextPresentDelay: randomNumBetween(500, 1000),
+      nextPresentDelay: randomNumBetween(1, 100),
     }
     this.createObject = this.createObject.bind(this)
-
   }
 
   componentDidMount():void {
@@ -119,8 +121,7 @@ export class Game extends Component<IProps> {
       this.setState({ context });
     }
     this.update()
-    
-
+  
     this.props.actions.updateGameStatus('INITIAL')
   }
 
@@ -176,7 +177,6 @@ export class Game extends Component<IProps> {
           break;
       }
     }
-
   }
 
   removeCanvasItems(primary:Array<string>) {
@@ -203,7 +203,7 @@ export class Game extends Component<IProps> {
           y: randomNumBetweenExcluding(0, this.state.screen.height, ship.position.y - 80, ship.position.y + 80)
         },
         create: this.createObject,
-        addScore: (points:number) => this.props.actions.addScore(points),
+        addScore: this.addScore.bind(this),
         onSound: (item:any) => {},
       });
       this.createObject(asteroid, 'asteroids');
@@ -215,6 +215,7 @@ export class Game extends Component<IProps> {
         x: this.state.screen.width/2,
         y: this.state.screen.height/2
       },
+      lastShotLimit: 0.1,
       create: this.createObject,
       onDie: () => {},
       onSound: () => {},
@@ -224,7 +225,9 @@ export class Game extends Component<IProps> {
     this.createObject(ship, 'ships')
     //this.props.actions.updateShieldFuel(0)
   }
-
+  addScore(points:number) {
+    this.props.actions.addScore(points)
+  }
   generatePresent() {
     let ship = this.canvasItemsGroups['ships'].find(item => item.type === 'ship' && item.delete === false)
       if (!ship) {
@@ -237,21 +240,25 @@ export class Game extends Component<IProps> {
           y: randomNumBetweenExcluding(0, this.state.screen.height, -100, +100)
         },
         create: this.createObject,
-        addScore: (points:number) => this.props.actions.addScore(points),
+        addScore: this.addScore.bind(this),
         upgrade: () => {},
-        //upgradeType: randomInterger(4,4)
-        upgradeType: randomInterger(1,1),
-        //onSound: this.onSound.bind(this),
+        // upgradeType: randomInterger(4,4)
+        upgradeType: randomInterger(4,4),
+        // onSound: this.onSound.bind(this),
         onSound: () => {},
       });
       this.createObject(present, 'presents');
   }
 
   generateShield() {
+    //console.log('shield')
     let ship = this.canvasItemsGroups['ships'].find(i => i.type === 'ship');
+    
     if (!ship) {
       return;
     }
+
+    this.removeCanvasItems(['shield'])
     let shield = new Shield({
       position: {
         x: randomNumBetweenExcluding(0, this.state.screen.width, -100, +100),
@@ -259,9 +266,10 @@ export class Game extends Component<IProps> {
       },
       create: this.createObject.bind(this),
       ship: ship,
-      updateShieldFuel: this.props.actions.updateShieldFuel,
+      updateShieldFuel: (data:number) => this.props.actions.updateShieldFuel(data),
       onSound: () => {} //this.onSound.bind(this)
     })
+    //console.log('shield: ', shield)
     this.createObject(shield, 'shields');
   }
 
@@ -270,6 +278,9 @@ export class Game extends Component<IProps> {
   }
   collisionWithBullet(item1:CanvasItem, item2:CanvasItem):void {
     item1.destroy(item2.type);
+    item2.destroy(item1.type);
+  }
+  collisionWithShield(item1:CanvasItem, item2:CanvasItem):void {
     item2.destroy(item1.type);
   }
   collisionWithShip(item1:CanvasItem, item2:CanvasItem):void {
@@ -282,7 +293,6 @@ export class Game extends Component<IProps> {
       this.props.actions.updateGameStatus('GAME_RECOVERY')
     }
   }
-
 
   collisionWithPresent(ship:ShipItem, present:PresentItem):void {
     const upgrade = present.getUpgrade();
@@ -314,6 +324,9 @@ export class Game extends Component<IProps> {
         //   status: 'PLAYING'
         // })
       break;
+      case 'shield': 
+        this.generateShield()
+      break;
       case 'biggerBullets':
       case 'triple':
         ship.upgrade({
@@ -344,15 +357,15 @@ export class Game extends Component<IProps> {
     // Collision ship with present
     collisionBetween(this.canvasItemsGroups, 'ship', [ 'present'], this.collisionWithPresent.bind(this))
 
+    // Collision shield with danger objects
+    collisionBetween(this.canvasItemsGroups, 'shield', [ 'asteroid', 'ufo'], this.collisionWithShield.bind(this))
+
+
     // Generate new present
     if (this.state.nextPresentDelay-- < 0){
       this.state.nextPresentDelay = randomNumBetween(400, 1000)
-      this.generatePresent()  
-      
+      this.generatePresent() 
     }
-
-    
-
 
     updateObjects(this.canvasItemsGroups, this.state)
 
@@ -369,13 +382,14 @@ export class Game extends Component<IProps> {
       this.props.actions.updateGameStatus('GAME_ON')
     }
 
-   //this.frame++;
-    if (this.props.gameStatus !== 'STOPPED') {
-      requestAnimationFrame(() => this.update())
+    if (this.fps !== 60) {
+      setTimeout(() => {
+        requestAnimationFrame(() => this.update());
+      }, 1000 / this.fps);
+    } else {
+      requestAnimationFrame(() => this.update());
     }
-    
   }
-  
 
   render() {
  

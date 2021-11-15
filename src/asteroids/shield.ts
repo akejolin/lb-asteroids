@@ -27,6 +27,7 @@ export default class Shield {
   fuel:number;
   isActive:boolean;
   delete:boolean;
+  updateShieldFuel:Function
 
   constructor(props:Iprops) {
     this.type = 'shield'
@@ -40,16 +41,16 @@ export default class Shield {
     this.create = props.create;
     this.vertices = asteroidVertices(8, 40)
     this.color = '#FFFFFF';
-    this.alpha = 0;
+    this.alpha = 1;
     this.ship = props.ship;
     //this.upgrade = props.upgrade;
     this.type = 'default'
     //this.topRoot = props.topRoot
     this.fuel = 500
-    //this.updateShieldFuel = props.updateShieldFuel
+    this.updateShieldFuel = props.updateShieldFuel
     this.isActive = false
     this.delete = false;
-    //this.updateShieldFuel(this.fuel)
+    this.updateShieldFuel(this.fuel)
   }
   selfDestruction() {
 
@@ -98,8 +99,8 @@ export default class Shield {
       ctx.arc(x, y, r, 0, Math.PI*2, false)
       ctx.closePath()
       ctx.fill()
-      ctx.strokeStyle = this.color
-      ctx.stroke()
+      //ctx.strokeStyle = this.color
+      //ctx.stroke()
     }
     const context = state.context
     if (!context) {

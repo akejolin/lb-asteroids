@@ -172,7 +172,7 @@ export default class Ship {
       }
     });
     //this.create(particle);
-    this.create(particle, 'particles');
+    //this.create(particle, 'particles');
   }
 
   render(state:IState):void {
