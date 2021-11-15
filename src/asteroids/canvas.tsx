@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef, useLayoutEffect } from 'react'
 
 type ComponentProps = {
-  canvasRef: any;
+  ref: any;
   width:number;
   background:string;
   height:number;

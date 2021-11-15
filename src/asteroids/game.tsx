@@ -18,6 +18,7 @@ import {
 } from './processer'
 import Asteroid from './Asteroid'
 import Ship from './Ship'
+import Ufo from './Ufo'
 import Shield from './shield'
 import Present from './Present'
 import BoardInit from './boardInit'
@@ -87,6 +88,7 @@ export class Game extends Component<IProps> {
       bullets: [],
       presents: [],
       ufos: [],
+      ufoBullets: [],
       others: [],
     }
 
@@ -114,6 +116,7 @@ export class Game extends Component<IProps> {
       hasError: false,
       //nextPresentDelay: randomNumBetween(500, 1000),
       nextPresentDelay: randomNumBetween(1, 100),
+      ufoDelay: randomNumBetween(1, 100),
     }
     this.createObject = this.createObject.bind(this)
   }
@@ -233,6 +236,34 @@ export class Game extends Component<IProps> {
     this.createObject(ship, 'ships')
     //this.props.actions.updateShieldFuel(0)
   }
+  createUfo() {
+
+    let ship = this.canvasItemsGroups['ships'].find(i => i.type === 'ship');
+    if (!ship) {
+      return;
+    }
+
+    let ufo = new Ufo({
+      type: 'ufo',
+      size: 20,
+      // Ufo always takes off out of screen from a random side.
+      position: {
+        x: randomNumBetweenExcluding(-200, this.state.screen.width + 200, 0, this.state.screen.width),
+        y: randomNumBetweenExcluding(-200, this.state.screen.height + 200, 0, this.state.screen.height)
+      },
+      create: this.createObject.bind(this),
+      target: ship,
+      addScore: this.addScore.bind(this),
+      onSound: () => {}, // this.onSound.bind(this),
+      onDie: () => {
+        //this.props.actions.updateNewUfoStatus()
+      }
+    });
+    this.createObject(ufo, 'ufos')
+
+  }
+
+
   addScore(points:number) {
     this.props.actions.addScore(points)
   }
@@ -311,8 +342,11 @@ export class Game extends Component<IProps> {
         present.destroy(ship.type);        
       break;
       case 'nova':
-        const primaryArray = this.canvasItemsGroups['asteroids']
-        superNova(primaryArray)
+        const asteroids = this.canvasItemsGroups['asteroids']
+        const ufos = this.canvasItemsGroups['ufos']
+        const targets = asteroids.concat(ufos)
+        console.log()
+        superNova(targets)
 
         //this.ufos.forEach(item => {
         //  item.destroy('nova')
@@ -359,7 +393,7 @@ export class Game extends Component<IProps> {
       },
       {
         primary: 'ship',
-        secondary: [ 'asteroid', 'ufo'],
+        secondary: [ 'asteroid', 'ufo', 'ufoBullet'],
         cb: this.collisionWithShip.bind(this)
       },  
       {
@@ -369,7 +403,7 @@ export class Game extends Component<IProps> {
       },
       {
         primary: 'shield',
-        secondary: [ 'asteroid', 'ufo'],
+        secondary: [ 'asteroid', 'ufo', 'ufoBullet'],
         cb: this.collisionWithShield.bind(this)
       },   
     ]
@@ -379,6 +413,12 @@ export class Game extends Component<IProps> {
     if (this.state.nextPresentDelay-- < 0){
       this.state.nextPresentDelay = randomNumBetween(400, 1000)
       this.generatePresent() 
+    }
+
+    // Generate new ufo
+    if (this.state.ufoDelay-- < 0){
+      this.state.ufoDelay = randomNumBetween(400, 1000)
+      this.createUfo() 
     }
 
     // Instant Key handling

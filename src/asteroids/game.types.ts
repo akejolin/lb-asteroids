@@ -41,6 +41,7 @@ export interface IState {
   readyforNextLife: boolean,
   hasError: boolean,
   nextPresentDelay: number,
+  ufoDelay:number,
 }
 
 

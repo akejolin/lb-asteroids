@@ -2,7 +2,7 @@ import type { CanvasItem } from './game.types'
 
 const action = (item:CanvasItem) => new Promise<void>((resolve, reject) => {
     // Slow down the loop process to not overload memory
-    const delay = 50
+    const delay = 10
     setTimeout(async () => {
       try {
         item.destroy('nova')

@@ -3,7 +3,6 @@ import { asteroidVertices, randomNumBetween } from './helpers';
 import type { CanvasItem, IState, Iposition} from './game.types'
 
 export interface Iastroid extends CanvasItem {
-
   position: Iposition,
   velocity: Iposition,
   rotation: number,
@@ -14,7 +13,6 @@ export interface Iastroid extends CanvasItem {
   onSound: Function,
   destroy: Function,
   vertices: [],
-
 }
 
 export interface Iprops {

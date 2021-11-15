@@ -1,39 +1,83 @@
 import Particle from './Particle';
-import UfoBullet from './UfoBullet';
+import Bullet from './Bullet';
 import { asteroidVertices, randomNumBetween, findAngle, rotatePoint } from './helpers';
-import { addInterval, removeInterval } from './gameIntervalHandler'
-import colorTheme from './colorTheme'
+import { themes } from './color-theme'
 
-let classRoot
+import type { CanvasItem, IState, Iposition} from './game.types'
+
+export interface Iastroid extends CanvasItem {
+  position: Iposition,
+  velocity: Iposition,
+  rotation: number,
+  rotationSpeed: number,
+  radius: number,
+  score: number,
+  addScore: Function,
+  onSound: Function,
+  destroy: Function,
+  vertices: Iposition[],
+}
+
+export interface Iprops {
+  position: Iposition,
+  size:number,
+  create:Function,
+  addScore:Function,
+  onSound:Function,
+  onDie?:Function,
+  additionalScore?: number,
+  target:CanvasItem,
+  type:string;
+}
+
 export default class Ufo {
-  constructor(args) {
-    this.objectType = 'ufo'
-    classRoot = this
-    this.position = args.position
+
+  type:string;
+  position: Iposition;
+  velocity: Iposition;
+  vertices: Iposition[];
+  rotation: number;
+  radius: number;
+  rotationSpeed: number;
+  score:number = 1000;
+  additionalScore:number;
+  target: CanvasItem;
+  create:Function;
+  addScore:Function;
+  onDie: Function;
+  onSound: Function;
+  delete: boolean = false;
+  nextShotDelay: number;
+  bulletColor: string;
+
+  constructor(props:Iprops) {
+    this.type = 'ufo'
+    this.position = props.position
     this.velocity = {
       x: randomNumBetween(-2.5, 2.5),
       y: randomNumBetween(-2.5, 2.5)
     }
     this.rotation = 0
     this.rotationSpeed = randomNumBetween(-1, 1)
-    this.radius = args.size
-    const additionalScore = Number(args.additionalScore) || 0
-    this.score = 1000
-    this.create = args.create
-    this.addScore = args.addScore
-    this.vertices = asteroidVertices(4, args.size)
-    this.target = args.target
-    this.onDie = args.onDie || function () {}
-    this.onSound = args.onSound
+    this.radius = props.size
+    this.additionalScore = Number(props.additionalScore) || 0
+    this.create = props.create
+    this.addScore = props.addScore
+    this.vertices = asteroidVertices(4, props.size)
+    this.target = props.target
+    this.onDie = props.onDie || function () {}
+    this.onSound = props.onSound
+    this.nextShotDelay = randomNumBetween(10, 100),
+    this.bulletColor = 'default';
     /*
-    this.image = args.image;
-    this.imageWidth = args.imageWidth;
-    this.imageHeight = args.imageHeight;
+    this.image = props.image;
+    this.imageWidth = props.imageWidth;
+    this.imageHeight = props.imageHeight;
 
     this.img = new Image();
-    this.img.src = args.image || "";
+    this.img.src = props.image || "";
     */
-    this.type= args.type;
+    this.type= props.type;
 
     this.generateNewShoot()
 
@@ -44,24 +88,21 @@ export default class Ufo {
 
   }
   generateNewShoot() {
-    addInterval('ufoShootIntervall', randomNumBetween(2000, 8000), () => {
-      removeInterval('ufoShootIntervall')
-      this.shoot()
-    })
+    this.nextShotDelay = randomNumBetween(10, 1200),
+    this.shoot()
   }
   shoot() {
-    const bullet = new UfoBullet({
+    const bullet = new Bullet({
       ship: this,
       size: 3,
-      target: this.target,
+      range: 1000,
+      color: this.bulletColor,
       onSound: this.onSound,
     })
     this.create(bullet, 'ufoBullets');
-    this.generateNewShoot()
   }
-  destroy(byWho) {
+  destroy(byWho:string) {
     this.delete = true;
-    removeInterval('ufoShootIntervall')
     this.onDie();
     this.addScore(this.score);
     this.onSound({
@@ -86,7 +127,17 @@ export default class Ufo {
     }
   }
 
-  render(state){
+  render(state:IState, ctx:any):void {
+
+    if(this.bulletColor === 'default') {
+      this.bulletColor = themes[state.colorThemeIndex].enemyBullet
+    }
+
+
+    if (this.nextShotDelay-- < 0) {
+      this.generateNewShoot()
+    }
+
 
     let _rotation = findAngle(this.target.position, this.position)
     _rotation = Math.round(_rotation + 272)
@@ -113,12 +164,12 @@ export default class Ufo {
     else if (this.position.y < -this.radius) this.position.y = state.screen.height + this.radius;
 
     // Draw
-    const context = state.context;
+    const context = ctx;
     context.save();
     context.translate(this.position.x, this.position.y);
     context.rotate(this.rotation * Math.PI / 180);
-    context.strokeStyle = colorTheme[state.selectedColorTheme].enemy
-    context.fillStyle = colorTheme[state.selectedColorTheme].enemy // ef404f
+    context.strokeStyle = themes[state.colorThemeIndex].enemy
+    context.fillStyle = themes[state.colorThemeIndex].enemy // ef404f
     context.lineWidth = 2;
     context.beginPath();
     context.moveTo(0, -this.radius);
