@@ -34,10 +34,9 @@ export interface Iprops {
 
   destroy(byWho?:string){
     this.delete = true;
-    console.log('destroyed: ', this.delete)
   }
 
-  render(state:IState){
+  render(state:IState, ctx:any){
     // Move
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
@@ -54,7 +53,7 @@ export interface Iprops {
     }
 
     // Draw
-    const {context} = state;
+    const context = ctx;
     if (context){
       context.save();
       context.translate(this.position.x, this.position.y);

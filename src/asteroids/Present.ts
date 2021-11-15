@@ -176,7 +176,7 @@ export default class Present {
 
   }
 
-  render(state:IState):void{
+  render(state:IState, ctx:any):void{
 
     // Destroy with effects if max age has excided
     if (this.lifeSpan-- < 0){
@@ -203,7 +203,7 @@ export default class Present {
     else if(this.position.y < -this.radius) this.position.y = state.screen.height + this.radius;
 
     // Draw
-    const { context } = state;
+    const context = ctx
     if (context) {
       context.save();
       context.translate(this.position.x, this.position.y);

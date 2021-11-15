@@ -14,7 +14,7 @@ import {
 import { themes } from './color-theme'
 import {
   updateObjects,
-  collisionBetween,
+  collisionBetweens,
 } from './processer'
 import Asteroid from './Asteroid'
 import Ship from './Ship'
@@ -24,10 +24,11 @@ import BoardInit from './boardInit'
 import BoardGameOver from './boardGameOver'
 import BoardGetReady from './boardGetReady'
 import GameBoard from './gameboard/main'
+import Canvas from './canvas'
 
 import type { Ikeys } from './keys'
 import type { Iscreen } from './screen-handler'
-import type { IState, CanvasItem, CanvasItemGroups, Iposition } from './game.types'
+import type { IState, CanvasItem, CanvasItemGroups, Iposition, collisionObject } from './game.types'
 
 const mapStateToProps = (state:any) => ({
   gameStatus: state.asteroids.gameStatus,
@@ -72,6 +73,7 @@ export class Game extends Component<IProps> {
   canvasItemsGroups: CanvasItemGroups;
   particles:CanvasItem[];
   fps = 60;
+  ctx:any;
   constructor(props:IProps) {
     super(props);
     this.canvasRef = React.createRef<HTMLCanvasElement>();
@@ -118,7 +120,8 @@ export class Game extends Component<IProps> {
   componentDidMount():void {
     if (this.canvasRef.current !== null) {
       const context = this.canvasRef.current!.getContext('2d');
-      this.setState({ context });
+      //this.setState({ context });
+      this.ctx = context
     }
     this.update()
   
@@ -146,7 +149,9 @@ export class Game extends Component<IProps> {
         case 'GAME_START':
           clearAllIntervals()
           this.removeAllCanvasItems()
-          this.generateAsteroids(3)
+          this.generateAsteroids(1)
+          this.props.actions.updateGameLevel(0)
+          this.props.actions.updateShieldFuel(0)
           this.props.actions.updateLives(2)
           this.props.actions.updateGameStatus('GAME_ON')
           break;
@@ -160,6 +165,7 @@ export class Game extends Component<IProps> {
           addInterval('waitForRecovery', 1000, () => {
             removeInterval('waitForRecovery')
             this.props.actions.updateGameStatus('GAME_GET_READY')
+            this.props.actions.updateShieldFuel(0)
           })
           break;
         case 'GAME_GET_READY':
@@ -199,8 +205,8 @@ export class Game extends Component<IProps> {
       let asteroid = new Asteroid({
         size: 80,
         position: {
-          x: randomNumBetweenExcluding(0, this.state.screen.width, ship.position.x - 80, ship.position.x + 80),
-          y: randomNumBetweenExcluding(0, this.state.screen.height, ship.position.y - 80, ship.position.y + 80)
+          x: randomNumBetweenExcluding(0, this.state.screen.width, ship.position.x - 180, ship.position.x + 180),
+          y: randomNumBetweenExcluding(0, this.state.screen.height, ship.position.y - 180, ship.position.y + 180)
         },
         create: this.createObject,
         addScore: this.addScore.bind(this),
@@ -215,12 +221,13 @@ export class Game extends Component<IProps> {
         x: this.state.screen.width/2,
         y: this.state.screen.height/2
       },
-      lastShotLimit: 0.1,
+      //lastShotLimit: 0.1,
       create: this.createObject,
       onDie: () => {},
       onSound: () => {},
       updateUpgradeFuel: (data:any) => {
         return this.props.actions.updateUpgradeFuel(data)},
+      
     });
     this.createObject(ship, 'ships')
     //this.props.actions.updateShieldFuel(0)
@@ -336,10 +343,11 @@ export class Game extends Component<IProps> {
     }
     present.destroy(ship.type);
 }
-  update():void {
+  async update():Promise<void> {
     
     const {state} = this
-    const {context, screen} = state
+    const {screen} = state
+    const context = this.ctx
     if (context) {
       context.save();
       context.scale(screen.ratio, screen.ratio);
@@ -350,26 +358,37 @@ export class Game extends Component<IProps> {
       context.fillRect(0, 0, screen.width, screen.height);
       context.globalAlpha = 1;
     }
-    // Collision bullet with asteroid or ufo
-    collisionBetween(this.canvasItemsGroups, 'bullet', [ 'asteroid', 'ufo'], this.collisionWithBullet.bind(this))
-    // Collision ship with asteroid or ufo
-    collisionBetween(this.canvasItemsGroups, 'ship', [ 'asteroid', 'ufo'], this.collisionWithShip.bind(this))
-    // Collision ship with present
-    collisionBetween(this.canvasItemsGroups, 'ship', [ 'present'], this.collisionWithPresent.bind(this))
 
-    // Collision shield with danger objects
-    collisionBetween(this.canvasItemsGroups, 'shield', [ 'asteroid', 'ufo'], this.collisionWithShield.bind(this))
 
+    const collisions:collisionObject[] = [
+      {
+        primary: 'bullet',
+        secondary: [ 'asteroid', 'ufo'],
+        cb: this.collisionWithBullet.bind(this)
+      },
+      {
+        primary: 'ship',
+        secondary: [ 'asteroid', 'ufo'],
+        cb: this.collisionWithShip.bind(this)
+      },  
+      {
+        primary: 'ship',
+        secondary: [ 'present'],
+        cb: this.collisionWithPresent.bind(this)
+      },
+      {
+        primary: 'shield',
+        secondary: [ 'asteroid', 'ufo'],
+        cb: this.collisionWithShield.bind(this)
+      },   
+    ]
+    await collisionBetweens(this.canvasItemsGroups, collisions)
 
     // Generate new present
     if (this.state.nextPresentDelay-- < 0){
       this.state.nextPresentDelay = randomNumBetween(400, 1000)
       this.generatePresent() 
     }
-
-    updateObjects(this.canvasItemsGroups, this.state)
-
-    //updateObjects(this.particles, state)
 
     // Instant Key handling
     if (this.props.gameStatus === 'INITIAL' && state.keys.space) {
@@ -382,6 +401,19 @@ export class Game extends Component<IProps> {
       this.props.actions.updateGameStatus('GAME_ON')
     }
 
+
+    if (!this.canvasItemsGroups['asteroids'].length && this.props.gameStatus === 'GAME_ON') {
+      this.props.actions.updateGameLevel('+1')
+      this.levelUp()
+    }
+
+
+
+    await updateObjects(this.canvasItemsGroups, this.state, this.ctx)
+
+    context.restore();
+
+    // Engine
     if (this.fps !== 60) {
       setTimeout(() => {
         requestAnimationFrame(() => this.update());
@@ -389,6 +421,17 @@ export class Game extends Component<IProps> {
     } else {
       requestAnimationFrame(() => this.update());
     }
+  }
+
+  levelUp() {
+    const amountOfAsteroids = Math.floor(Number(this.props.level) + 1)
+    const nextSelectedColor = randomInterger(0, themes.length - 1 )
+    this.props.actions.updateColorTheme(nextSelectedColor)
+    this.state.colorThemeIndex = nextSelectedColor
+
+    this.state.nextPresentDelay = randomNumBetween(400, 1000)
+    this.generateAsteroids(amountOfAsteroids)
+    this.props.actions.addScore(1000)
   }
 
   render() {
@@ -411,19 +454,9 @@ export class Game extends Component<IProps> {
           upgradeFuel={this.props.upgradeFuel}
           upgradeFuelTotal={this.props.upgradeFuelTotal}
         />
-        <canvas
-          id="canvas-board"
+        <Canvas
           ref={this.canvasRef}
-          style={{
-            display: 'block',
-            backgroundColor: themes[this.state.colorThemeIndex].background,
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            width: '100%',
-            height: '100%',
-          }}
+          background={themes[this.state.colorThemeIndex].background}
           width={screen.width * screen.ratio}
           height={screen.height * screen.ratio}
         />

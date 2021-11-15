@@ -42,3 +42,10 @@ export interface IState {
   hasError: boolean,
   nextPresentDelay: number,
 }
+
+
+export interface collisionObject {
+  primary: string;
+  secondary: Array<string>;
+  cb: Function;
+}

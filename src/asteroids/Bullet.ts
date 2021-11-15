@@ -13,9 +13,11 @@ export default class Bullet {
   type:string;
   rotation: number;
   position: Iposition;
+  originPos: Iposition;
   velocity: Iposition;
   radius: number;
   delete: boolean;
+  range: number = 400
 
   constructor(props:Iprops) {
     this.type = 'bullet'
@@ -28,6 +30,10 @@ export default class Bullet {
 
     let posDelta = rotatePoint({x:0, y:-20}, {x:0,y:0}, this.rotation * Math.PI / 180);
     this.position = {
+      x: props.ship.position.x + posDelta.x,
+      y: props.ship.position.y + posDelta.y
+    };
+    this.originPos = {
       x: props.ship.position.x + posDelta.x,
       y: props.ship.position.y + posDelta.y
     };
@@ -44,7 +50,7 @@ export default class Bullet {
     this.delete = true;
   }
 
-  render(state:IState):void {
+  render(state:IState, ctx:any):void {
     // Move
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
@@ -57,8 +63,16 @@ export default class Bullet {
         this.destroy();
     }
 
+    if ( (this.position.x < this.originPos.x - this.range
+      || this.position.y < this.originPos.y - this.range )
+      || (this.position.x > this.originPos.x + this.range
+      || this.position.y > this.originPos.y + this.range )) {
+        this.destroy();
+    }
+
+
     // Draw
-    const {context} = state
+    const context = ctx
     if(context) {
       context.save()
       context.translate(this.position.x, this.position.y)

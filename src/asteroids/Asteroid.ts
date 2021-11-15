@@ -60,7 +60,6 @@ export default class Asteroid {
     this.vertices = asteroidVertices(8, props.size)
     this.delete = false
 
-
   }
 
   destroy(byWho:string):void {
@@ -73,8 +72,7 @@ export default class Asteroid {
     this.delete = true;
     this.addScore(this.score);
     // Explode
-    if (this.radius < 11){
-      const runs = 8
+      const runs = this.radius
       for (let i = 0; i < runs; i++) {
         const particle = new Particle({
           lifeSpan: randomNumBetween(10, 30),
@@ -90,7 +88,6 @@ export default class Asteroid {
         });
         this.create(particle, 'particles');
       }
-    }
 
     // Break into smaller asteroids
     const len = byWho === 'shield' ? 1 : 2
@@ -114,7 +111,7 @@ export default class Asteroid {
 
   }
 
-  render(state:IState):void {
+  render(state:IState, ctx:any):void {
     // Move
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
@@ -135,7 +132,7 @@ export default class Asteroid {
     else if(this.position.y < -this.radius) this.position.y = state.screen.height + this.radius;
 
     // Draw
-    const context = state.context;
+    const context = ctx //state.context;
     if (context) {
       context.save();
       context.translate(this.position.x, this.position.y);

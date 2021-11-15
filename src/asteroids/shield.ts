@@ -61,7 +61,7 @@ export default class Shield {
     this.delete = true
   }
 
-  render(state:IState) {
+  render(state:IState, ctx:any) {
 
     if (this.fuel <= 0) {
       this.destroy('noFuel')
@@ -90,19 +90,19 @@ export default class Shield {
 
 
 
-    const circle = (ctx:CanvasRenderingContext2D, x:number, y:number, r:number, c:string) => {
-      ctx.beginPath()
-      var rad = ctx.createRadialGradient(x, y, 1, x, y, r)
+    const circle = (_ctx:CanvasRenderingContext2D, x:number, y:number, r:number, c:string) => {
+      _ctx.beginPath()
+      var rad = _ctx.createRadialGradient(x, y, 1, x, y, r)
       rad.addColorStop(0.7, 'rgba('+c+',0)')
       rad.addColorStop(1, 'rgba('+c+',1)')
-      ctx.fillStyle = rad
-      ctx.arc(x, y, r, 0, Math.PI*2, false)
-      ctx.closePath()
-      ctx.fill()
-      //ctx.strokeStyle = this.color
-      //ctx.stroke()
+      _ctx.fillStyle = rad
+      _ctx.arc(x, y, r, 0, Math.PI*2, false)
+      _ctx.closePath()
+      _ctx.fill()
+      //_ctx.strokeStyle = this.color
+      //_ctx.stroke()
     }
-    const context = state.context
+    const context = ctx
     if (!context) {
       return
     }

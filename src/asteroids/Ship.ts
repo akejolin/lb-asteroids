@@ -175,7 +175,7 @@ export default class Ship {
     //this.create(particle, 'particles');
   }
 
-  render(state:IState):void {
+  render(state:IState, ctx:any):void {
 
  
     if (this.upgrades.length > 0) {
@@ -270,7 +270,7 @@ export default class Ship {
 
 
     // Draw
-    const {context} = state;
+    const context = ctx;
     if (context) {
       context.save();
       context.translate(this.position.x, this.position.y);
