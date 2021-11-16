@@ -8,6 +8,8 @@ export interface Iweapon {
   size: number,
   lazar: boolean,
   triple: boolean,
+  range?: number;
+  lastShotLimit: number
 }
 
 export interface Iprops {
@@ -74,21 +76,29 @@ export default class Ship {
         size: 2,
         lazar: false,
         triple: false,
+        range: 400,
+        lastShotLimit: 170,
       },
       lazar: {
         size: 2,
         lazar: true,
         triple: false,
+        range: 600,
+        lastShotLimit: 0,
       },
       biggerBullets: {
         size: 20,
         lazar: false,
         triple: false,
+        range: 400,
+        lastShotLimit: 170,
       },
       triple: {
         size: 2,
         lazar: false,
         triple: true,
+        range: 400,
+        lastShotLimit: 170,
       }
     }
     this.currentWeapond = props.currentWeapond || 'default'
@@ -179,7 +189,7 @@ export default class Ship {
 
  
     if (this.upgrades.length > 0) {
-      const selection = this.upgrades.filter(item => item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets')
+      const selection = this.upgrades.filter(item => item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets' || item.upgrade.type === 'lazar')
       if (selection.length > 0) {
         const currentWeapond = selection[selection.length-1]
         this.currentWeapond = currentWeapond.upgrade.type
@@ -192,11 +202,11 @@ export default class Ship {
       for (let item of items) {
         if (item.lifeSpan-- < 0) { 
           items.splice(index, 1);
-          if (item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets') {
+          if (item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets' || item.upgrade.type === 'lazar') {
             this.currentWeapond = 'default'
           }
         } else {
-          if (item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets') {
+          if (item.upgrade.type === 'triple' || item.upgrade.type === 'biggerBullets' || item.upgrade.type === 'lazar') {
             this.updateUpgradeFuel({
               data: item.lifeSpan,
               total: item.upgrade.duration
@@ -205,7 +215,6 @@ export default class Ship {
         }
         index++;
       }
-      
     }
 
     // Controls
@@ -219,25 +228,33 @@ export default class Ship {
       this.rotate('RIGHT');
     }
     if (state.keys.space && Date.now() - this.lastShot > this.lastShotLimit) {
-
-      if (this.currentWeapond === 'triple') {
-
-        const bulletLeft = new Bullet({ship: this, additionalRotation: -10});
-        const bulletRight = new Bullet({ ship: this, additionalRotation: 10});
-        const bullet = new Bullet({ ship: this });
-        this.create(bulletLeft, 'bullets');
-        this.create(bulletRight, 'bullets');
-        this.create(bullet, 'bullets');
+      switch(this.currentWeapond) {
+        case 'triple':
+          const bulletLeft = new Bullet({ship: this, additionalRotation: -10});
+          const bulletRight = new Bullet({ ship: this, additionalRotation: 10});
+          const bullet = new Bullet({ ship: this });
+          this.create(bulletLeft, 'bullets');
+          this.create(bulletRight, 'bullets');
+          this.create(bullet, 'bullets');
+        break;
+        case 'lazar':
+          console.log('aaaaaaaaaaaaaa')
+          const bullet2 = new Bullet({
+            ship: this,
+            size: this.weapond[this.currentWeapond].size,
+            range: this.weapond[this.currentWeapond].range ? this.weapond[this.currentWeapond].range : 400,
+          })
+          this.create(bullet2, 'bullets');
+        break;
+        default:
+          const bullet3 = new Bullet({
+            ship: this,
+            size: this.weapond[this.currentWeapond].size,
+            range: this.weapond[this.currentWeapond].range ? this.weapond[this.currentWeapond].range : 400,
+          })
+          this.create(bullet3, 'bullets');
+        break;
       }
-
-      if (this.currentWeapond === 'default' || this.currentWeapond === 'biggerBullets' ) {
-        const bullet = new Bullet({
-          ship: this,
-          size: this.weapond[this.currentWeapond].size,
-        })
-        this.create(bullet, 'bullets');
-      }
-
       this.lastShot = Date.now();
     }
 

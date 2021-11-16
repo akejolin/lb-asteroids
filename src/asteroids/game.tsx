@@ -282,7 +282,7 @@ export class Game extends Component<IProps> {
         addScore: this.addScore.bind(this),
         upgrade: () => {},
         // upgradeType: randomInterger(4,4)
-        upgradeType: randomInterger(2,2),
+        upgradeType: randomInterger(4,4),
         // onSound: this.onSound.bind(this),
         onSound: () => {},
       });

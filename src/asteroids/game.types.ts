@@ -50,3 +50,31 @@ export interface collisionObject {
   secondary: Array<string>;
   cb: Function;
 }
+
+
+
+export interface IupgradeBase {
+  type: string,
+  size: number,
+  duration: number,
+  image: string,
+  color: string,
+}
+
+export interface IshipWeapon extends IupgradeBase{
+
+}
+export interface IshipEquipment extends IupgradeBase{
+
+}
+export interface IgameChanger extends IupgradeBase{
+
+}
+
+export interface IspaceInterferer extends IupgradeBase{
+
+}
+
+export interface upgradeArray extends Array<IshipWeapon|IgameChanger|IshipEquipment|IspaceInterferer> {
+  
+}
