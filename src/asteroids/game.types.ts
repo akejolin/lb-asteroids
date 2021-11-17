@@ -55,14 +55,13 @@ export interface collisionObject {
 
 export interface IupgradeBase {
   type: string,
-  size: number,
   image: string,
   color: string,
-  duration?: number,
-  lifeSpan?: number,
 }
 
 export interface IshipWeapon extends IupgradeBase{
+  duration?: number,
+  lifeSpan?: number,
   size: number,
   range: number,
   lastShotLimit: number,
