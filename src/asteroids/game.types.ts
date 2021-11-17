@@ -56,13 +56,16 @@ export interface collisionObject {
 export interface IupgradeBase {
   type: string,
   size: number,
-  duration: number,
   image: string,
   color: string,
+  duration?: number,
+  lifeSpan?: number,
 }
 
 export interface IshipWeapon extends IupgradeBase{
-
+  size: number,
+  range: number,
+  lastShotLimit: number,
 }
 export interface IshipEquipment extends IupgradeBase{
 

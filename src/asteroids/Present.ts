@@ -48,12 +48,13 @@ export default class Present {
   alpha;
   isInRadar;
   upgrade;
-  upgradeTypes:IupgradeType[];
+  upgradeTypes:upgradeArray;
   upgradeType: number;
   color;
   lifeSpan:number;
 
-  getUpgrade = ():IupgradeType => this.upgradeTypes[this.upgradeType]
+  getUpgrade = ():IshipWeapon|IshipEquipment|IgameChanger|IspaceInterferer =>
+    this.upgradeTypes[this.upgradeType]
 
   constructor(props:Iprops) {
     this.type = 'present'
@@ -85,13 +86,6 @@ export default class Present {
         color: '#00c1ff',
       } as IgameChanger,
       {
-        type: 'biggerBullets',
-        size: 15,
-        duration: 700,
-        image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
-        color: '#ffc131',
-      } as IshipWeapon,
-      {
         type: 'nova',
         duration: 1,
         size: 15,
@@ -99,18 +93,31 @@ export default class Present {
         color: '#fe02c7',
       } as IspaceInterferer,
       {
+        type: 'biggerBullets',
+        size: 15,
+        duration: 700,
+        image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
+        color: '#ffc131',
+        range: 400,
+        lastShotLimit: 170,
+      } as IshipWeapon,
+      {
         type: 'triple',
         size: 2,
-        duration: 1000,
+        duration: 700,
         image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
         color: '#363433',
+        range: 400,
+        lastShotLimit: 170,
       } as IshipWeapon,
       {
         type: 'lazar',
         size: 2,
-        duration: 500,
+        duration: 400,
         image: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjAuMSAyMC40IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMC4xIDIwLjQ7IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBwb2ludHM9IjEwLjUsOC4zIDE2LjksMTAuMiA2LjksMjAuMiA5LjMsMTIuMSA5LjMsMTIuMSAyLjksMTAuMiAxMi45LDAuMiAxMC41LDguMyAiLz48L3N2Zz4=',
         color: '#363433',
+        range: 600,
+        lastShotLimit: 0,
       } as IshipWeapon,
       {
         type: 'shield',

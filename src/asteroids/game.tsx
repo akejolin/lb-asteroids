@@ -30,7 +30,16 @@ import { superNova } from './nova'
 
 import type { Ikeys } from './keys'
 import type { Iscreen } from './screen-handler'
-import type { IState, CanvasItem, CanvasItemGroups, Iposition, collisionObject } from './game.types'
+import type {
+  IState,
+  CanvasItem,
+  CanvasItemGroups,
+  Iposition,
+  collisionObject,
+  IshipWeapon,
+  IshipEquipment,
+  IgameChanger,
+  IspaceInterferer } from './game.types'
 
 const mapStateToProps = (state:any) => ({
   gameStatus: state.asteroids.gameStatus,
@@ -61,6 +70,7 @@ type IProps = {
   // Upgrades actions
   interface ShipItem extends CanvasItem {
     upgrade: Function,
+    newWeapon: Function,
   }
   interface PresentItem extends CanvasItem {
     getUpgrade: Function,
@@ -282,7 +292,7 @@ export class Game extends Component<IProps> {
         addScore: this.addScore.bind(this),
         upgrade: () => {},
         // upgradeType: randomInterger(4,4)
-        upgradeType: randomInterger(4,4),
+        upgradeType: randomInterger(1,1),
         // onSound: this.onSound.bind(this),
         onSound: () => {},
       });
@@ -315,55 +325,34 @@ export class Game extends Component<IProps> {
   createObject(item:CanvasItem, group:string = 'asteroids'):void {
     this.canvasItemsGroups[group].push(item);
   }
-  collisionWithBullet(item1:CanvasItem, item2:CanvasItem):void {
-    item1.destroy(item2.type);
-    item2.destroy(item1.type);
-  }
-  collisionWithShield(item1:CanvasItem, item2:CanvasItem):void {
-    item2.destroy(item1.type);
-  }
-  collisionWithShip(item1:CanvasItem, item2:CanvasItem):void {
-    item1.destroy(item2.type);
-    item2.destroy(item1.type);
-    if (this.props.lives < 1) {
-      this.props.actions.updateGameStatus('GAME_OVER')
-    } else {
-      this.props.actions.updateLives('-1')
-      this.props.actions.updateGameStatus('GAME_RECOVERY')
-    }
-  }
 
   collisionWithPresent(ship:ShipItem, present:PresentItem):void {
-    const upgrade = present.getUpgrade();
+    const upgrade: IshipWeapon | IshipEquipment | IgameChanger | IspaceInterferer = present.getUpgrade();
     // Extralife
     switch(upgrade.type) {
       case 'extraLife':
         this.props.actions.updateLives('+1')
-        present.destroy(ship.type);        
+        present.destroy(ship.type);       
       break;
       case 'nova':
         const asteroids = this.canvasItemsGroups['asteroids']
         const ufos = this.canvasItemsGroups['ufos']
         const targets = asteroids.concat(ufos)
-        console.log()
-        superNova(targets)
-
-        //this.ufos.forEach(item => {
-        //  item.destroy('nova')
-        //})
         // this.onSound({
         //   file: 'nova',
         //   status: 'PLAYING'
         // })
+
+        superNova(targets)
+
       break;
       case 'shield': 
         this.generateShield()
       break;
       case 'biggerBullets':
       case 'triple':
-        ship.upgrade({
-          upgrade,
-        })
+      case 'lazar':
+        ship.newWeapon(upgrade)
       break;
     }
     present.destroy(ship.type);
@@ -389,12 +378,24 @@ export class Game extends Component<IProps> {
       {
         primary: 'bullet',
         secondary: [ 'asteroid', 'ufo'],
-        cb: this.collisionWithBullet.bind(this)
+        cb: (item1:CanvasItem, item2:CanvasItem):void => {
+          item1.destroy(item2.type);
+          item2.destroy(item1.type);
+        }
       },
       {
         primary: 'ship',
         secondary: [ 'asteroid', 'ufo', 'ufoBullet'],
-        cb: this.collisionWithShip.bind(this)
+        cb: (item1:CanvasItem, item2:CanvasItem):void => {
+          item1.destroy(item2.type);
+          item2.destroy(item1.type);
+          if (this.props.lives < 1) {
+            this.props.actions.updateGameStatus('GAME_OVER')
+          } else {
+            this.props.actions.updateLives('-1')
+            this.props.actions.updateGameStatus('GAME_RECOVERY')
+          }
+        }
       },  
       {
         primary: 'ship',
@@ -404,7 +405,9 @@ export class Game extends Component<IProps> {
       {
         primary: 'shield',
         secondary: [ 'asteroid', 'ufo', 'ufoBullet'],
-        cb: this.collisionWithShield.bind(this)
+        cb: (item1:CanvasItem, item2:CanvasItem):void => {
+          item2.destroy(item1.type);
+        }
       },   
     ]
     await collisionBetweens(this.canvasItemsGroups, collisions)
@@ -437,8 +440,6 @@ export class Game extends Component<IProps> {
       this.props.actions.updateGameLevel('+1')
       this.levelUp()
     }
-
-
 
     await updateObjects(this.canvasItemsGroups, this.state, this.ctx)
 
