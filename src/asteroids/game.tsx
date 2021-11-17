@@ -291,8 +291,8 @@ export class Game extends Component<IProps> {
         create: this.createObject,
         addScore: this.addScore.bind(this),
         upgrade: () => {},
-        // upgradeType: randomInterger(4,4)
-        upgradeType: randomInterger(1,1),
+        upgradeType: randomInterger(0,4),
+        //upgradeType: randomInterger(1,1),
         // onSound: this.onSound.bind(this),
         onSound: () => {},
       });
@@ -300,13 +300,10 @@ export class Game extends Component<IProps> {
   }
 
   generateShield() {
-    //console.log('shield')
     let ship = this.canvasItemsGroups['ships'].find(i => i.type === 'ship');
-    
     if (!ship) {
       return;
     }
-
     this.removeCanvasItems(['shield'])
     let shield = new Shield({
       position: {
@@ -318,7 +315,6 @@ export class Game extends Component<IProps> {
       updateShieldFuel: (data:number) => this.props.actions.updateShieldFuel(data),
       onSound: () => {} //this.onSound.bind(this)
     })
-    //console.log('shield: ', shield)
     this.createObject(shield, 'shields');
   }
 
