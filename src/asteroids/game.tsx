@@ -62,7 +62,7 @@ type IProps = {
   }
   level: number,
   lives: number,
-  //shieldFuel: number,
+  shieldFuel: number,
   upgradeFuel: number,
   upgradeFuelTotal: number,
 }
@@ -165,6 +165,7 @@ export class Game extends Component<IProps> {
           this.removeAllCanvasItems()
           this.generateAsteroids(1)
           this.props.actions.updateGameLevel(0)
+          this.props.actions.updateUpgradeFuel(0)
           this.props.actions.updateShieldFuel(0)
           this.props.actions.updateLives(2)
           this.props.actions.updateGameStatus('GAME_ON')
@@ -244,7 +245,6 @@ export class Game extends Component<IProps> {
       
     });
     this.createObject(ship, 'ships')
-    //this.props.actions.updateShieldFuel(0)
   }
   createUfo() {
 
@@ -291,7 +291,7 @@ export class Game extends Component<IProps> {
         create: this.createObject,
         addScore: this.addScore.bind(this),
         upgrade: () => {},
-        upgradeType: randomInterger(0,4),
+        upgradeType: randomInterger(0,5),
         //upgradeType: randomInterger(1,1),
         // onSound: this.onSound.bind(this),
         onSound: () => {},
@@ -327,8 +327,7 @@ export class Game extends Component<IProps> {
     // Extralife
     switch(upgrade.type) {
       case 'extraLife':
-        this.props.actions.updateLives('+1')
-        present.destroy(ship.type);       
+        this.props.actions.updateLives('+1')      
       break;
       case 'nova':
         const asteroids = this.canvasItemsGroups['asteroids']
@@ -411,13 +410,20 @@ export class Game extends Component<IProps> {
     // Generate new present
     if (this.state.nextPresentDelay-- < 0){
       this.state.nextPresentDelay = randomNumBetween(400, 1000)
-      this.generatePresent() 
+      if (this.canvasItemsGroups['presents'].length < 1) {
+        this.generatePresent()
+      }
+       
     }
 
     // Generate new ufo
+    const ufolimit = this.props.level - 1 
+
     if (this.state.ufoDelay-- < 0){
+      if (this.props.level > 1 && this.canvasItemsGroups['ufos'].length < ufolimit) {
+        this.createUfo() 
+      }
       this.state.ufoDelay = randomNumBetween(400, 1000)
-      this.createUfo() 
     }
 
     // Instant Key handling
