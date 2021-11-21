@@ -31,6 +31,7 @@ import Present from './Present'
 import BoardInit from './boardInit'
 import BoardGameOver from './boardGameOver'
 import BoardGetReady from './boardGetReady'
+import TextFlasher from './text-flasher'
 import GameBoard from './gameboard/main'
 import Canvas from './canvas'
 import { superNova } from './nova'
@@ -170,7 +171,6 @@ export class Game extends Component<IProps> {
           removeInterval('waitForGetReady')
           removeInterval('waitForRecovery')
           clearAllIntervals()
-          createShip(this)
           break;
         case 'GAME_START':
           clearAllIntervals()
@@ -180,6 +180,7 @@ export class Game extends Component<IProps> {
           this.props.actions.updateUpgradeFuel(0)
           this.props.actions.updateShieldFuel(0)
           this.props.actions.updateLives(2)
+          createShip(this)
           this.props.actions.updateGameStatus('GAME_ON')
           break;
         case 'GAME_ABORT':
@@ -187,9 +188,14 @@ export class Game extends Component<IProps> {
           this.removeAllCanvasItems()
           this.props.actions.updateGameStatus('INITIAL')
           break;
+        case 'GAME_NEW_LAUNCH':
+            createShip(this)
+            this.props.actions.updateShieldFuel(0)
+            this.props.actions.updateGameStatus('GAME_ON')
+          break;
         case 'GAME_RECOVERY':
           this.removeCanvasItems(['ship'])
-          addInterval('waitForRecovery', 1000, () => {
+          addInterval('waitForRecovery', 500, () => {
             removeInterval('waitForRecovery')
             this.props.actions.updateGameStatus('GAME_GET_READY')
             this.props.actions.updateShieldFuel(0)
@@ -199,7 +205,13 @@ export class Game extends Component<IProps> {
           removeInterval('waitForRecovery')
           addInterval('waitForGetReady', 10000, () => {
             removeInterval('waitForGetReady')
-            this.props.actions.updateGameStatus('GAME_ON')
+            this.props.actions.updateGameStatus('GAME_NEW_LAUNCH')
+          })
+          break;
+        case 'GAME_LEVEL_UP':
+          addInterval('waitLevelUp', 1000, () => {
+            removeInterval('waitLevelUp')
+            this.levelUp()
           })
           break;
         case 'GAME_OVER':
@@ -249,10 +261,10 @@ export class Game extends Component<IProps> {
         const asteroids = this.canvasItemsGroups['asteroids']
         const ufos = this.canvasItemsGroups['ufos']
         const targets = asteroids.concat(ufos)
-        // this.onSound({
-        //   file: 'nova',
-        //   status: 'PLAYING'
-        // })
+        this.onSound({
+           file: 'nova',
+           status: 'PLAYING'
+        })
 
         superNova(targets)
 
@@ -278,6 +290,7 @@ levelUp() {
   this.state.nextPresentDelay = randomNumBetween(400, 1000)
   generateAsteroids(this, amountOfAsteroids)
   this.props.actions.addScore(1000)
+  this.props.actions.updateGameStatus('GAME_ON')
 }
 
 async update():Promise<void> {
@@ -371,13 +384,13 @@ async update():Promise<void> {
       this.props.actions.updateGameStatus('GAME_ABORT')
     }
     if (this.props.gameStatus === 'GAME_GET_READY' && state.keys.space) {
-      this.props.actions.updateGameStatus('GAME_ON')
+      this.props.actions.updateGameStatus('GAME_NEW_LAUNCH')
     }
 
 
     if (!this.canvasItemsGroups['asteroids'].length && this.props.gameStatus === 'GAME_ON') {
       this.props.actions.updateGameLevel('+1')
-      this.levelUp()
+      this.props.actions.updateGameStatus('GAME_LEVEL_UP')
     }
 
     await updateObjects(this.canvasItemsGroups, this.state, this.ctx)
@@ -403,7 +416,8 @@ async update():Promise<void> {
         <KeyHandler keys={this.state.keys} cb={(keys:Ikeys) => this.setState({keys})}/>
         <BoardInit gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
         <BoardGameOver gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
-        <BoardGetReady gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
+        <TextFlasher allowedStatus={['GAME_GET_READY', 'GAME_RECOVERY']} text={`PRESS ENTER TO LAUNCH NEW SHIP`} gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
+        <TextFlasher allowedStatus={['GAME_LEVEL_UP']} text={`LEVEL UP`} gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
         <GameBoard
           gameStatus={this.props.gameStatus}
           score={this.props.score}

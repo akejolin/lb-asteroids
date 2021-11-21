@@ -35,7 +35,7 @@ export default (props: ComponentProps) => {
             lineHeight: '100%',
           }}
         >
-            <div style={{marginLeft: 10, whiteSpace: 'nowrap'}}>Level: {props.level}</div>
+            <div style={{marginLeft: 10, whiteSpace: 'nowrap'}}>Level: {Math.floor(Number(props.level) + 1)}</div>
             <div style={{marginLeft: 16, whiteSpace: 'nowrap'}}>Lives: {props.lives}</div>
             <FlexView row style={{height: 'unset', textAlign: 'center'}}>
               <div style={{marginLeft: 16}}>Score: {props.score}</div>

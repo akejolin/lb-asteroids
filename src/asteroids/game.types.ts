@@ -69,6 +69,7 @@ export interface IupgradeBase {
   type: string,
   image: string,
   color: string,
+  catchSound?: string,
 }
 
 export interface IshipWeapon extends IupgradeBase{
