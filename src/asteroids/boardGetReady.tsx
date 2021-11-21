@@ -31,7 +31,7 @@ export default (props: ComponentProps) => {
       }}>
         <FlexView style={{flexGrow: 0, marginTop: 20, height: 'unset'}}>
           <FlexView row>
-            <h1 className="blinking">GET READY!</h1>
+            <h1 className="blinking">PRESS ENTER TO LAUNCH NEW SHIP</h1>
           </FlexView>
         </FlexView>
       </FlexView>

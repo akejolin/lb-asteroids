@@ -17,6 +17,13 @@ import {
   collisionBetweens,
 } from './processer'
 import Asteroid from './Asteroid'
+import {
+  generateAsteroids,
+  createShip,
+  createUfo,
+  generatePresent,
+  generateShield,
+} from './generate'
 import Ship from './Ship'
 import Ufo from './Ufo'
 import Shield from './shield'
@@ -27,19 +34,24 @@ import BoardGetReady from './boardGetReady'
 import GameBoard from './gameboard/main'
 import Canvas from './canvas'
 import { superNova } from './nova'
+import sounds from './sounds'
 
 import type { Ikeys } from './keys'
 import type { Iscreen } from './screen-handler'
 import type {
   IState,
   CanvasItem,
+  Ishield,
+  Ipresent,
   CanvasItemGroups,
   Iposition,
   collisionObject,
   IshipWeapon,
   IshipEquipment,
   IgameChanger,
-  IspaceInterferer } from './game.types'
+  IspaceInterferer,
+  Isound
+ } from './game.types'
 
 const mapStateToProps = (state:any) => ({
   gameStatus: state.asteroids.gameStatus,
@@ -152,18 +164,18 @@ export class Game extends Component<IProps> {
     if (prevProps.gameStatus !== this.props.gameStatus) {
       switch (this.props.gameStatus) {
         case 'INITIAL':
-          this.generateAsteroids(3)
+          generateAsteroids(this, 3)
           break;
         case 'GAME_ON':
           removeInterval('waitForGetReady')
           removeInterval('waitForRecovery')
           clearAllIntervals()
-          this.createShip()
+          createShip(this)
           break;
         case 'GAME_START':
           clearAllIntervals()
           this.removeAllCanvasItems()
-          this.generateAsteroids(1)
+          generateAsteroids(this, 1)
           this.props.actions.updateGameLevel(0)
           this.props.actions.updateUpgradeFuel(0)
           this.props.actions.updateShieldFuel(0)
@@ -185,7 +197,7 @@ export class Game extends Component<IProps> {
           break;
         case 'GAME_GET_READY':
           removeInterval('waitForRecovery')
-          addInterval('waitForGetReady', 1500, () => {
+          addInterval('waitForGetReady', 10000, () => {
             removeInterval('waitForGetReady')
             this.props.actions.updateGameStatus('GAME_ON')
           })
@@ -211,112 +223,16 @@ export class Game extends Component<IProps> {
       targets[key].splice(0,targets[key].length)
     };
   }
-  generateAsteroids(amount:number) {
-    let ship = this.canvasItemsGroups['ships'].find(item => item.type === 'ship' && item.delete === false) || {
-      position: { x: 0, y: 0} as Iposition
-    };
-
-    for (let i = 0; i < amount; i++) {
-      let asteroid = new Asteroid({
-        size: 80,
-        position: {
-          x: randomNumBetweenExcluding(0, this.state.screen.width, ship.position.x - 180, ship.position.x + 180),
-          y: randomNumBetweenExcluding(0, this.state.screen.height, ship.position.y - 180, ship.position.y + 180)
-        },
-        create: this.createObject,
-        addScore: this.addScore.bind(this),
-        onSound: (item:any) => {},
-      });
-      this.createObject(asteroid, 'asteroids');
-    }
-  }
-  createShip() {
-    let ship = new Ship({
-      position: {
-        x: this.state.screen.width/2,
-        y: this.state.screen.height/2
-      },
-      //lastShotLimit: 0.1,
-      create: this.createObject,
-      onDie: () => {},
-      onSound: () => {},
-      updateUpgradeFuel: (data:any) => {
-        return this.props.actions.updateUpgradeFuel(data)},
-      
-    });
-    this.createObject(ship, 'ships')
-  }
-  createUfo() {
-
-    let ship = this.canvasItemsGroups['ships'].find(i => i.type === 'ship');
-    if (!ship) {
-      return;
-    }
-
-    let ufo = new Ufo({
-      type: 'ufo',
-      size: 20,
-      // Ufo always takes off out of screen from a random side.
-      position: {
-        x: randomNumBetweenExcluding(-200, this.state.screen.width + 200, 0, this.state.screen.width),
-        y: randomNumBetweenExcluding(-200, this.state.screen.height + 200, 0, this.state.screen.height)
-      },
-      create: this.createObject.bind(this),
-      target: ship,
-      addScore: this.addScore.bind(this),
-      onSound: () => {}, // this.onSound.bind(this),
-      onDie: () => {
-        //this.props.actions.updateNewUfoStatus()
-      }
-    });
-    this.createObject(ufo, 'ufos')
-
-  }
-
 
   addScore(points:number) {
     this.props.actions.addScore(points)
   }
-  generatePresent() {
-    let ship = this.canvasItemsGroups['ships'].find(item => item.type === 'ship' && item.delete === false)
-      if (!ship) {
-        return;
-      }
-      let present = new Present({
-        size: 20,
-        position: {
-          x: randomNumBetweenExcluding(0, this.state.screen.width, -100, +100),
-          y: randomNumBetweenExcluding(0, this.state.screen.height, -100, +100)
-        },
-        create: this.createObject,
-        addScore: this.addScore.bind(this),
-        upgrade: () => {},
-        upgradeType: randomInterger(0,5),
-        //upgradeType: randomInterger(1,1),
-        // onSound: this.onSound.bind(this),
-        onSound: () => {},
-      });
-      this.createObject(present, 'presents');
+
+  onSound(data:Isound):void{
+    sounds[data.file].play()
   }
 
-  generateShield() {
-    let ship = this.canvasItemsGroups['ships'].find(i => i.type === 'ship');
-    if (!ship) {
-      return;
-    }
-    this.removeCanvasItems(['shield'])
-    let shield = new Shield({
-      position: {
-        x: randomNumBetweenExcluding(0, this.state.screen.width, -100, +100),
-        y: randomNumBetweenExcluding(0, this.state.screen.height, -100, +100)
-      },
-      create: this.createObject.bind(this),
-      ship: ship,
-      updateShieldFuel: (data:number) => this.props.actions.updateShieldFuel(data),
-      onSound: () => {} //this.onSound.bind(this)
-    })
-    this.createObject(shield, 'shields');
-  }
+
 
   createObject(item:CanvasItem, group:string = 'asteroids'):void {
     this.canvasItemsGroups[group].push(item);
@@ -342,7 +258,7 @@ export class Game extends Component<IProps> {
 
       break;
       case 'shield': 
-        this.generateShield()
+        generateShield(this)
       break;
       case 'biggerBullets':
       case 'triple':
@@ -352,7 +268,19 @@ export class Game extends Component<IProps> {
     }
     present.destroy(ship.type);
 }
-  async update():Promise<void> {
+
+levelUp() {
+  const amountOfAsteroids = Math.floor(Number(this.props.level) + 1)
+  const nextSelectedColor = randomInterger(0, themes.length - 1 )
+  this.props.actions.updateColorTheme(nextSelectedColor)
+  this.state.colorThemeIndex = nextSelectedColor
+
+  this.state.nextPresentDelay = randomNumBetween(400, 1000)
+  generateAsteroids(this, amountOfAsteroids)
+  this.props.actions.addScore(1000)
+}
+
+async update():Promise<void> {
     
     const {state} = this
     const {screen} = state
@@ -380,6 +308,27 @@ export class Game extends Component<IProps> {
       },
       {
         primary: 'ship',
+        secondary: [ 'present'],
+        cb: this.collisionWithPresent.bind(this),
+        inRadarCb: (isInRadar:boolean, item1:CanvasItem, item2:Ipresent):void => {
+          if (isInRadar && (item2.isInRadar !== isInRadar)) {
+            item2.isInRadar = isInRadar
+          } else {
+            item2.isInRadar = isInRadar
+          }
+        }
+      },
+      {
+        primary: 'shield',
+        secondary: [ 'asteroid', 'ufo', 'ufoBullet'],
+        cb: (item1:Ishield, item2:CanvasItem):void => {
+          if (item1.isActive) {
+            item2.destroy(item1.type);
+          }
+        }
+      },
+      {
+        primary: 'ship',
         secondary: [ 'asteroid', 'ufo', 'ufoBullet'],
         cb: (item1:CanvasItem, item2:CanvasItem):void => {
           item1.destroy(item2.type);
@@ -391,18 +340,6 @@ export class Game extends Component<IProps> {
             this.props.actions.updateGameStatus('GAME_RECOVERY')
           }
         }
-      },  
-      {
-        primary: 'ship',
-        secondary: [ 'present'],
-        cb: this.collisionWithPresent.bind(this)
-      },
-      {
-        primary: 'shield',
-        secondary: [ 'asteroid', 'ufo', 'ufoBullet'],
-        cb: (item1:CanvasItem, item2:CanvasItem):void => {
-          item2.destroy(item1.type);
-        }
       },   
     ]
     await collisionBetweens(this.canvasItemsGroups, collisions)
@@ -411,7 +348,7 @@ export class Game extends Component<IProps> {
     if (this.state.nextPresentDelay-- < 0){
       this.state.nextPresentDelay = randomNumBetween(400, 1000)
       if (this.canvasItemsGroups['presents'].length < 1) {
-        this.generatePresent()
+        generatePresent(this)
       }
        
     }
@@ -421,7 +358,7 @@ export class Game extends Component<IProps> {
 
     if (this.state.ufoDelay-- < 0){
       if (this.props.level > 1 && this.canvasItemsGroups['ufos'].length < ufolimit) {
-        this.createUfo() 
+        createUfo(this) 
       }
       this.state.ufoDelay = randomNumBetween(400, 1000)
     }
@@ -455,17 +392,6 @@ export class Game extends Component<IProps> {
     } else {
       requestAnimationFrame(() => this.update());
     }
-  }
-
-  levelUp() {
-    const amountOfAsteroids = Math.floor(Number(this.props.level) + 1)
-    const nextSelectedColor = randomInterger(0, themes.length - 1 )
-    this.props.actions.updateColorTheme(nextSelectedColor)
-    this.state.colorThemeIndex = nextSelectedColor
-
-    this.state.nextPresentDelay = randomNumBetween(400, 1000)
-    this.generateAsteroids(amountOfAsteroids)
-    this.props.actions.addScore(1000)
   }
 
   render() {

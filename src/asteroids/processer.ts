@@ -50,7 +50,7 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
 
   export const collisionBetweens = (haystack:CanvasItemGroups, array:collisionObject[]) => {
     const promises = array.map(item => {
-      collisionBetween(haystack, item.primary, item.secondary, item.cb)
+      collisionBetween(haystack, item.primary, item.secondary, item.cb, item.inRadarCb ? item.inRadarCb: () => {})
     });
     return Promise.all(promises)
   }
@@ -60,7 +60,8 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
     haystack:CanvasItemGroups,
     primary:string,
     secondary:Array<string>,
-    cb:Function
+    cb:Function,
+    inRadarCb:Function = () => {}
   ):Promise<void> => new Promise<void>((resolve, reject) => {
    
     const primaryArray:CanvasItem[] = haystack[`${primary}s`]
@@ -77,11 +78,25 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
         const item2 = secondaryArray[b];
         if (item1 && item2 && checkCollision(item1, item2)) {
           cb(item1, item2)
+          resolve()
         }
+        inRadarCb(checkInradar(item1, item2), item1, item2)
+
+
       }
     }
     resolve()
   })
+
+  export const checkInradar = (obj1:CanvasItem, obj2:CanvasItem):boolean => {
+    var vx = obj1.position.x - obj2.position.x;
+    var vy = obj1.position.y - obj2.position.y;
+    var length = Math.sqrt(vx * vx + vy * vy);
+    if (length < ((obj1.radius + 120) + (obj2.radius + 120))) {
+      return true;
+    }
+    return false;
+  }
 
 
 /*

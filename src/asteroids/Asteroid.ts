@@ -61,12 +61,14 @@ export default class Asteroid {
   }
 
   destroy(byWho:string):void {
-    /*
-    this.onSound({
-      file: 'asteroidHit',
-      status: 'PLAYING'
-    })
-    */
+    
+    if (byWho !== 'nova') {
+      this.onSound({
+        file: 'asteroidHit',
+        status: 'PLAYING'
+      })
+    }
+    
     this.delete = true;
     this.addScore(this.score);
     // Explode

@@ -31,7 +31,7 @@ export default (props: ComponentProps) => {
       }}>
         <FlexView style={{flexGrow: 0, marginTop: 20, height: 'unset'}}>
           <FlexView row>
-            <h1 className="blinking-slow">GAME OVER!</h1>
+            <h1 className="blinking-slow">GAME OVER</h1>
           </FlexView>
         </FlexView>
       </FlexView>

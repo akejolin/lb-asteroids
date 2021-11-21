@@ -67,7 +67,7 @@ export default class Ufo {
     this.target = props.target
     this.onDie = props.onDie || function () {}
     this.onSound = props.onSound
-    this.nextShotDelay = randomNumBetween(10, 100),
+    this.nextShotDelay = randomNumBetween(10, 1200),
     this.bulletColor = 'default';
     /*
     this.image = props.image;
@@ -78,8 +78,6 @@ export default class Ufo {
     this.img.src = props.image || "";
     */
     this.type= props.type;
-
-    this.generateNewShoot()
 
     this.onSound({
       file: 'enemyShowUp',
@@ -98,6 +96,10 @@ export default class Ufo {
       range: 1000,
       color: this.bulletColor,
       onSound: this.onSound,
+    })
+    this.onSound({
+      file: 'enemyShot',
+      status: 'PLAYING'
     })
     this.create(bullet, 'ufoBullets');
   }
