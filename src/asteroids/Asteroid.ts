@@ -126,11 +126,41 @@ export default class Asteroid {
     }
 
     // Screen edges
-    if(this.position.x > state.screen.width + this.radius) this.position.x = -this.radius;
-    else if(this.position.x < -this.radius) this.position.x = state.screen.width + this.radius;
-    if(this.position.y > state.screen.height + this.radius) this.position.y = -this.radius;
-    else if(this.position.y < -this.radius) this.position.y = state.screen.height + this.radius;
+    if (state.inifityScreen) {
+      if (this.position.x > state.screen.width + this.radius) {
+        this.position.x = -this.radius;
+      } else if(this.position.x < -this.radius){
+        this.position.x = state.screen.width + this.radius;
+      }
+      if (this.position.y > state.screen.height + this.radius) {
+          this.position.y = -this.radius;
+      } else if (this.position.y < -this.radius) {
+        this.position.y = state.screen.height + this.radius;
+      }
+    } else {
 
+      let x = this.velocity.x
+      let y = this.velocity.y
+      
+      if (this.position.x + this.radius > state.screen.width) {
+        x = -this.velocity.x;
+        this.position.x = state.screen.width - this.radius - 3;
+      } else if(this.position.x - this.radius < 0){
+        x = -this.velocity.x
+        this.position.x = 0 + this.radius
+        
+      }
+      if (this.position.y + this.radius > state.screen.height) {
+        y = -this.velocity.y;
+        this.position.y = state.screen.height - this.radius - 3;
+      } else if (this.position.y - this.radius < 0) {
+        y = -this.velocity.y
+        this.position.y = 0 + this.radius
+      }
+
+      const newVelocity = {x,y}
+      this.velocity = newVelocity
+    }
     // Draw
     const context = ctx //state.context;
     if (context) {

@@ -3,6 +3,7 @@ import Ship from './Ship'
 import Ufo from './Ufo'
 import Shield from './shield'
 import Present from './Present'
+import Star from './star'
 import {randomNumBetweenExcluding, randomInterger, randomNumBetween} from './helpers'
 import type {
     IState,
@@ -14,6 +15,16 @@ import type {
     IshipEquipment,
     IgameChanger,
     IspaceInterferer } from './game.types'
+
+    export const createStar = (that:any) => {
+      let star = new Star({
+        position: {
+          x: that.state.screen.width/2,
+          y: that.state.screen.height/2
+        },
+      })
+      that.createObject(star, 'others')
+    }
 
 
 export const generateAsteroids = (that:any, amount:number) => {
@@ -96,7 +107,7 @@ export const generatePresent = (that:any) => {
         create: that.createObject,
         addScore: that.addScore.bind(that),
         upgrade: () => {},
-        upgradeType: randomInterger(0,5),
+        upgradeType: randomInterger(6,6),
         //upgradeType: randomInterger(1,1),
         onSound: that.onSound.bind(that)
       });

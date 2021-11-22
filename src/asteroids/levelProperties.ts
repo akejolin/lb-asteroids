@@ -7,7 +7,7 @@ export const levelProperties  = [
     {
         level: 1,
         ufoShotDeley: 200,
-    }
+    },
     {
         level: 10,
         ufoShotDeley: 200,

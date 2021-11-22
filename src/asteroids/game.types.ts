@@ -53,6 +53,8 @@ export interface IState {
   hasError: boolean,
   nextPresentDelay: number,
   ufoDelay:number,
+  inifityScreen:boolean,
+  inifityFuel:number,
 }
 
 

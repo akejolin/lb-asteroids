@@ -16,7 +16,6 @@ import {
   updateObjects,
   collisionBetweens,
 } from './processer'
-import Asteroid from './Asteroid'
 import {
   generateAsteroids,
   createShip,
@@ -24,18 +23,14 @@ import {
   generatePresent,
   generateShield,
 } from './generate'
-import Ship from './Ship'
-import Ufo from './Ufo'
-import Shield from './shield'
-import Present from './Present'
 import BoardInit from './boardInit'
 import BoardGameOver from './boardGameOver'
-import BoardGetReady from './boardGetReady'
 import TextFlasher from './text-flasher'
 import GameBoard from './gameboard/main'
 import Canvas from './canvas'
 import { superNova } from './nova'
 import sounds from './sounds'
+import GameBorder from './gameBorder'
 
 import type { Ikeys } from './keys'
 import type { Iscreen } from './screen-handler'
@@ -140,6 +135,8 @@ export class Game extends Component<IProps> {
       //nextPresentDelay: randomNumBetween(500, 1000),
       nextPresentDelay: randomNumBetween(1, 100),
       ufoDelay: randomNumBetween(1, 100),
+      inifityScreen:true,
+      inifityFuel: 500,
     }
     this.createObject = this.createObject.bind(this)
   }
@@ -180,6 +177,10 @@ export class Game extends Component<IProps> {
           this.props.actions.updateUpgradeFuel(0)
           this.props.actions.updateShieldFuel(0)
           this.props.actions.updateLives(2)
+          this.setState({
+            inifityScreen: true,
+            inifityFuel: 0,
+          })
           createShip(this)
           this.props.actions.updateGameStatus('GAME_ON')
           break;
@@ -244,8 +245,6 @@ export class Game extends Component<IProps> {
     sounds[data.file].play()
   }
 
-
-
   createObject(item:CanvasItem, group:string = 'asteroids'):void {
     this.canvasItemsGroups[group].push(item);
   }
@@ -271,6 +270,12 @@ export class Game extends Component<IProps> {
       break;
       case 'shield': 
         generateShield(this)
+      break;
+      case 'noinfinity':
+        this.setState({
+          inifityScreen:false,
+          inifityFuel:500
+        })
       break;
       case 'biggerBullets':
       case 'triple':
@@ -307,6 +312,12 @@ async update():Promise<void> {
       context.globalAlpha = 0.7;
       context.fillRect(0, 0, screen.width, screen.height);
       context.globalAlpha = 1;
+    }
+
+    if (!this.state.inifityScreen) {
+      if (this.state.inifityFuel-- < 0) {
+        this.setState({inifityScreen:true,inifityFuel:0})
+      }
     }
 
 
@@ -428,6 +439,7 @@ async update():Promise<void> {
           upgradeFuel={this.props.upgradeFuel}
           upgradeFuelTotal={this.props.upgradeFuelTotal}
         />
+        <GameBorder show={!this.state.inifityScreen}/>
         <Canvas
           ref={this.canvasRef}
           background={themes[this.state.colorThemeIndex].background}
