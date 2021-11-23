@@ -377,7 +377,18 @@ async update():Promise<void> {
         primary: 'ship',
         secondary: [ 'asteroid', 'ufo', 'ufoBullet'],
         cb: (item1:CanvasItem, item2:CanvasItem):void => {
-          item1.destroy(item2.type);
+
+          const shields = this.canvasItemsGroups['shields']
+          let shieldIsActive = false
+          shields.forEach((shield:any) => {
+            if (shield.isActive) {
+              shieldIsActive = true
+            }
+          });
+
+          if (!shieldIsActive) {
+            item1.destroy(item2.type);
+          }
           item2.destroy(item1.type);
           if (this.props.lives < 1) {
             this.props.actions.updateGameStatus('GAME_OVER')

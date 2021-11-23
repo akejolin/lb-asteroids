@@ -145,6 +145,12 @@ export default class Ship {
     });
     this.create(particle, 'particles');
   }
+  playKlinkSound():void{
+    this.onSound({
+      file: 'klink',
+      status: 'PLAYING'
+    })
+  }
 
   render(state:IState, ctx:any):void {
 
@@ -232,6 +238,7 @@ export default class Ship {
       if (this.position.y > state.screen.height + this.radius) {
           this.position.y = -this.radius;
       } else if (this.position.y < -this.radius) {
+        
         this.position.y = state.screen.height + this.radius;
       }
     } else {
@@ -240,14 +247,22 @@ export default class Ship {
       let y = this.velocity.y
       
       if (this.position.x + this.radius> state.screen.width) {
+        this.playKlinkSound()
         x = -this.velocity.x;
-      } else if(this.position.x - this.radius < 0){
+        this.position.x = state.screen.width - this.radius - 3;
+      } else if(this.position.x - this.radius < 0) {
+        this.playKlinkSound()
         x = -this.velocity.x
+        this.position.x = 0 + this.radius
       }
       if (this.position.y + this.radius > state.screen.height) {
+        this.playKlinkSound()
         y = -this.velocity.y;
+        this.position.y = state.screen.height - this.radius - 3;
       } else if (this.position.y - this.radius < 0) {
+        this.playKlinkSound()
         y = -this.velocity.y
+        this.position.y = 0 + this.radius
       }
 
       const newVelocity = {x,y}

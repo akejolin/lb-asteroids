@@ -147,17 +147,33 @@ export default class Asteroid {
       let y = this.velocity.y
       
       if (this.position.x + this.radius > state.screen.width) {
+        this.onSound({
+          file: 'klink',
+          status: 'PLAYING'
+        })
         x = -this.velocity.x;
         this.position.x = state.screen.width - this.radius - 3;
       } else if(this.position.x - this.radius < 0){
+        this.onSound({
+          file: 'klink',
+          status: 'PLAYING'
+        })
         x = -this.velocity.x
         this.position.x = 0 + this.radius
         
       }
       if (this.position.y + this.radius > state.screen.height) {
+        this.onSound({
+          file: 'klink',
+          status: 'PLAYING'
+        })
         y = -this.velocity.y;
         this.position.y = state.screen.height - this.radius - 3;
       } else if (this.position.y - this.radius < 0) {
+        this.onSound({
+          file: 'klink',
+          status: 'PLAYING'
+        })
         y = -this.velocity.y
         this.position.y = 0 + this.radius
       }

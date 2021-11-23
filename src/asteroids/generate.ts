@@ -111,7 +111,7 @@ export const generatePresent = (that:any) => {
         addScore: that.addScore.bind(that),
         upgrade: () => {},
         //upgradeType: randomInterger(0,7),
-        upgradeType: randomInterger(6,6),
+        upgradeType: randomInterger(7,7),
         onSound: that.onSound.bind(that)
       });
       that.createObject(present, 'presents');

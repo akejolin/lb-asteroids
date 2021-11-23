@@ -71,4 +71,11 @@ export default {
       throttleMs: 100
     }
   ),
+  klink: new UIfx(
+    `${SNOWPACK_PUBLIC_PUBLIC_URL}/sounds/klink.mp3`,
+    {
+      volume: 1.0,
+      throttleMs: 100
+    }
+  ),
 } as soundArrObject
