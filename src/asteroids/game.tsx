@@ -328,6 +328,10 @@ async update():Promise<void> {
       }
     }
 
+    if(this.canvasItemsGroups['ships'].length < 1){
+      this.removeCanvasItems(['shield'])
+    }
+
 
     const collisions:collisionObject[] = [
       {
