@@ -52,8 +52,10 @@ export default class Ship {
     })
     this.lastShotLimit = weapon.lastShotLimit
   }
+  id: number;
 
   constructor(props: Iprops) {
+    this.id = Date.now() + randomNumBetween(0, 100000)
     this.type = 'ship'
     this.weapondDefault = {
       type: 'default',

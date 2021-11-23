@@ -4,6 +4,7 @@ type ComponentProps = {
   ref: any;
   width:number;
   background:string;
+  backgroundImage?: string;
   height:number;
 }
 
@@ -21,6 +22,7 @@ export default forwardRef((props: ComponentProps, ref) => {
     ref={ref}
     style={{
       display: 'block',
+      backgroundImage: props.backgroundImage ? props.backgroundImage : 'none',
       backgroundColor: props.background,
       top: 0,
       bottom: 0,

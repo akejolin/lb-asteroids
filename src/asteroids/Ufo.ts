@@ -50,8 +50,11 @@ export default class Ufo {
   nextShotDelay: number;
   bulletColor: string;
   ufoImage: string;
+  public isInRadar;
+  id:number;
 
   constructor(props:Iprops) {
+    this.id = Date.now() + randomNumBetween(0, 100000)
     this.type = 'ufo'
     this.position = props.position
     this.velocity = {
@@ -85,6 +88,7 @@ export default class Ufo {
       file: 'enemyShowUp',
       status: 'PLAYING',
     })
+    this.isInRadar = false;
 
   }
   generateNewShoot() {

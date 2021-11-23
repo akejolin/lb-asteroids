@@ -14,14 +14,26 @@ export interface CanvasItem {
   type: string,
   destroy: Function,
   radius: number,
-  getUpgrade?: Function
+  isInRadar?: boolean,
+  radarRadius?: number,
+  id?:number,
 }
 
-export interface Ipresent extends CanvasItem {
-  isInRadar: boolean,
+export interface StarItem extends CanvasItem {
+
 }
+
 export interface Ishield extends CanvasItem {
   isActive: boolean,
+  addInterferer?:Function,
+  removeInterferer?:Function,
+}
+export interface ShipItem extends CanvasItem {
+  upgrade: Function,
+  newWeapon: Function,
+}
+export interface PresentItem extends CanvasItem {
+  getUpgrade: Function,
 }
 
 export interface soundArrObject {
@@ -30,16 +42,6 @@ export interface soundArrObject {
 
 export interface CanvasItemGroups {
   [key: string]: CanvasItem[]
-  /*
-  asteroids: CanvasItem[] | [],
-  particles: CanvasItem[] | [],
-  ships: CanvasItem[] | [],
-  shields: CanvasItem[] | [],
-  presents: CanvasItem[] | [], 
-  bullets: CanvasItem[] | [],
-  ufos: CanvasItem[] | [],
-  others: CanvasItem[] | [],
-  */
 }
 
 

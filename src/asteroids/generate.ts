@@ -2,6 +2,7 @@ import Asteroid from './Asteroid'
 import Ship from './Ship'
 import Ufo from './Ufo'
 import Shield from './shield'
+import AutoShield from './shieldAuto'
 import Present from './Present'
 import Star from './star'
 import {randomNumBetweenExcluding, randomInterger, randomNumBetween} from './helpers'
@@ -14,16 +15,18 @@ import type {
     IshipWeapon,
     IshipEquipment,
     IgameChanger,
-    IspaceInterferer } from './game.types'
+    IspaceInterferer,
+    StarItem
+} from './game.types'
 
-    export const createStar = (that:any) => {
-      let star = new Star({
-        position: {
-          x: that.state.screen.width/2,
-          y: that.state.screen.height/2
-        },
-      })
-      that.createObject(star, 'others')
+    export const generateStars = (that:any) => {
+      const array = Array.apply(null, Array(70)).map(()=>{})
+      array.forEach(element => {
+        let star = new Star({
+          screen: that.state.screen,
+        })
+        that.createObject(star, 'stars')
+      });
     }
 
 
@@ -107,8 +110,8 @@ export const generatePresent = (that:any) => {
         create: that.createObject,
         addScore: that.addScore.bind(that),
         upgrade: () => {},
+        //upgradeType: randomInterger(0,7),
         upgradeType: randomInterger(6,6),
-        //upgradeType: randomInterger(1,1),
         onSound: that.onSound.bind(that)
       });
       that.createObject(present, 'presents');
@@ -121,6 +124,25 @@ export const generateShield = (that:any) => {
     }
     that.removeCanvasItems(['shield'])
     let shield = new Shield({
+      position: {
+        x: randomNumBetweenExcluding(0, that.state.screen.width, -100, +100),
+        y: randomNumBetweenExcluding(0, that.state.screen.height, -100, +100)
+      },
+      create: that.createObject.bind(that),
+      ship: ship,
+      updateShieldFuel: (data:number) => that.props.actions.updateShieldFuel(data),
+      onSound: that.onSound.bind(that)
+    })
+    that.createObject(shield, 'shields');
+  }
+
+  export const generateAutoShield = (that:any) => {
+    let ship = that.canvasItemsGroups['ships'].find((i:CanvasItem) => i.type === 'ship');
+    if (!ship) {
+      return;
+    }
+    that.removeCanvasItems(['shield'])
+    let shield = new AutoShield({
       position: {
         x: randomNumBetweenExcluding(0, that.state.screen.width, -100, +100),
         y: randomNumBetweenExcluding(0, that.state.screen.height, -100, +100)

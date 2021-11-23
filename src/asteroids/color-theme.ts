@@ -1,5 +1,6 @@
 interface Ithemes {
   background: string,
+  backgroundImage?:string,
   bullet: string,
   enemy: string,
   enemyBullet: string,
@@ -56,6 +57,7 @@ export const themes: Ithemes[] = [
   },
   // Olive green
   {
+    backgroundImage: 'radial-gradient(circle, rgba(45,77,87,1) 0%, rgba(32,54,61,1) 90%)',
     background: '#2d4d57',
     bullet: '#e7bd01',
     enemy: '#fe5e02',

@@ -38,6 +38,8 @@ export default class Asteroid {
   radius;
   rotationSpeed;
   delete;
+  public isInRadar;
+  id: number;
 
 
   constructor(props: Iprops) {
@@ -57,6 +59,8 @@ export default class Asteroid {
     this.onSound = props.onSound;
     this.vertices = asteroidVertices(8, props.size)
     this.delete = false
+    this.isInRadar = false
+    this.id = Date.now() + randomNumBetween(0, 100000)
 
   }
 

@@ -18,10 +18,12 @@ import {
 } from './processer'
 import {
   generateAsteroids,
+  generateStars,
   createShip,
   createUfo,
   generatePresent,
   generateShield,
+  generateAutoShield,
 } from './generate'
 import BoardInit from './boardInit'
 import BoardGameOver from './boardGameOver'
@@ -38,7 +40,9 @@ import type {
   IState,
   CanvasItem,
   Ishield,
-  Ipresent,
+  ShipItem,
+  PresentItem,
+  StarItem,
   CanvasItemGroups,
   Iposition,
   collisionObject,
@@ -76,13 +80,7 @@ type IProps = {
 }
 
   // Upgrades actions
-  interface ShipItem extends CanvasItem {
-    upgrade: Function,
-    newWeapon: Function,
-  }
-  interface PresentItem extends CanvasItem {
-    getUpgrade: Function,
-  }
+
 
 let classRoot = "";
 
@@ -108,6 +106,7 @@ export class Game extends Component<IProps> {
       ufos: [],
       ufoBullets: [],
       others: [],
+      stars: []
     }
 
     this.particles = []
@@ -128,7 +127,7 @@ export class Game extends Component<IProps> {
         weapon: false,
         escape: false,
       },
-      colorThemeIndex: randomInterger(0, themes.length - 1 ),
+      colorThemeIndex: 7,//randomInterger(0, themes.length - 1 ),
       upgradeFuel: 0,
       readyforNextLife: false,
       hasError: false,
@@ -163,6 +162,7 @@ export class Game extends Component<IProps> {
       switch (this.props.gameStatus) {
         case 'INITIAL':
           generateAsteroids(this, 3)
+          generateStars(this)
           break;
         case 'GAME_ON':
           removeInterval('waitForGetReady')
@@ -177,6 +177,7 @@ export class Game extends Component<IProps> {
           this.props.actions.updateUpgradeFuel(0)
           this.props.actions.updateShieldFuel(0)
           this.props.actions.updateLives(2)
+          generateStars(this)
           this.setState({
             inifityScreen: true,
             inifityFuel: 0,
@@ -187,6 +188,10 @@ export class Game extends Component<IProps> {
         case 'GAME_ABORT':
           removeInterval('abortAfterGameOver')
           this.removeAllCanvasItems()
+          this.setState({
+            inifityScreen: true,
+            inifityFuel: 0,
+          })
           this.props.actions.updateGameStatus('INITIAL')
           break;
         case 'GAME_NEW_LAUNCH':
@@ -271,6 +276,9 @@ export class Game extends Component<IProps> {
       case 'shield': 
         generateShield(this)
       break;
+      case 'autoShield': 
+        generateAutoShield(this)
+      break;
       case 'noinfinity':
         this.setState({
           inifityScreen:false,
@@ -334,7 +342,7 @@ async update():Promise<void> {
         primary: 'ship',
         secondary: [ 'present'],
         cb: this.collisionWithPresent.bind(this),
-        inRadarCb: (isInRadar:boolean, item1:CanvasItem, item2:Ipresent):void => {
+        inRadarCb: (isInRadar:boolean, item1:CanvasItem, item2:PresentItem):void => {
           if (isInRadar && (item2.isInRadar !== isInRadar)) {
             item2.isInRadar = isInRadar
           } else {
@@ -348,6 +356,16 @@ async update():Promise<void> {
         cb: (item1:Ishield, item2:CanvasItem):void => {
           if (item1.isActive) {
             item2.destroy(item1.type);
+          }
+        },
+        inRadarCb: (isInRadar:boolean, item1:any, item2:CanvasItem):void => {
+          if (item1.type !== 'autoShield') {
+            return
+          }
+          if (isInRadar) {
+            item1.addInterferer()
+          } else {
+            // nothing
           }
         }
       },
@@ -423,7 +441,14 @@ async update():Promise<void> {
     const {screen} = this.state
     return (
       <React.Fragment>
-        <ScreenHandler cb={(screen:Iscreen) => this.setState({screen})} />
+        <ScreenHandler
+          cb={
+            (screen:Iscreen) => {
+              this.removeCanvasItems(['star'])
+              generateStars(this)
+              this.setState({screen})
+            }
+          } />
         <KeyHandler keys={this.state.keys} cb={(keys:Ikeys) => this.setState({keys})}/>
         <BoardInit gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />
         <BoardGameOver gameStatus={this.props.gameStatus} colorThemeIndex={this.state.colorThemeIndex} />

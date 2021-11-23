@@ -1,5 +1,6 @@
 import { rotatePoint } from './helpers';
 import {themes} from './color-theme'
+import { randomNumBetween } from './helpers';
 
 import type { CanvasItem, IState, Iposition} from './game.types'
 
@@ -25,8 +26,11 @@ export default class Bullet {
   lifeSpan: number = 50
   onSound: Function = () => {}
   color: string = 'default';
+  public isInRadar: boolean;
+  id:number;
 
   constructor(props:Iprops) {
+    this.id = Date.now() + randomNumBetween(0, 100000)
     this.type = 'bullet'
     this.rotation = props.ship.rotation;
     this.delete = false;
@@ -62,7 +66,7 @@ export default class Bullet {
       y:(posDelta.y / 2)
     };
     this.radius = props.size || 2;
-
+    this.isInRadar = false;
   }
 
   destroy(byWho?:string){

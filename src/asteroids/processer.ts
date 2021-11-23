@@ -89,10 +89,13 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
   })
 
   export const checkInradar = (obj1:CanvasItem, obj2:CanvasItem):boolean => {
+    if (!obj1.radarRadius) {
+      return false
+    }
     var vx = obj1.position.x - obj2.position.x;
     var vy = obj1.position.y - obj2.position.y;
     var length = Math.sqrt(vx * vx + vy * vy);
-    if (length < ((obj1.radius + 120) + (obj2.radius + 120))) {
+    if (length < ((obj1.radius + obj1.radarRadius) + (obj2.radius + obj1.radarRadius))) {
       return true;
     }
     return false;
