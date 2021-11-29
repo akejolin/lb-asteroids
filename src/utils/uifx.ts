@@ -5,8 +5,12 @@ export default class UIfx {
   volume:number;
   throttleMs:number;
   validateVolume:Function;
+  audioElement:any;
+  isPlaying:boolean;
+  loop:boolean = false;
 
   constructor(file:string, config:{volume:number,throttleMs:number}) {
+    this.isPlaying = false;
     const namespace = "uifx";
     const throttle = (fn:Function, delay:number) => {
       let lastCall = 0;
@@ -65,6 +69,7 @@ export default class UIfx {
       audioElement.id = id;
       audioElement.src = file;
       audioElement.preload = "auto";
+      audioElement.loop = this.loop;
 
       document.body.appendChild(audioElement);
       return file;
@@ -80,7 +85,9 @@ export default class UIfx {
   play(volume:number) {
     this.validateVolume(volume);
     const audioElement = new Audio(this.file);
+    this.audioElement = audioElement
     audioElement.load();
+    audioElement.loop = this.loop
     audioElement.addEventListener("loadeddata", () => {
       audioElement.volume = volume >= 0 && volume <= 1 ? volume : this.volume;
       const audioElementPromised = audioElement.play();
@@ -92,9 +99,24 @@ export default class UIfx {
           console.log(`UIfx says: "had a problem playing file: ${this.file}"`)
         });
     });
+    audioElement.onplaying = (event) => {
+      this.isPlaying = true
+    };
 
     return this;
   };
+  pause() {
+    if (this.isPlaying) {
+      this.audioElement.pause()
+      this.isPlaying = false
+    }
+  }
+  noLoop() {
+    this.loop = false
+  }
+  doLoop() {
+    this.loop = true
+  }
 
   setVolume(volume:number) {
     this.validateVolume(volume);

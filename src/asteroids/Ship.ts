@@ -1,10 +1,12 @@
 import Bullet from './Bullet';
+import LazarBullet from './LazarBullet'
 //import Lazar from './Lazar';
 import Particle from './Particle';
 import { rotatePoint, randomNumBetween } from './helpers';
 import type { IState, Iposition} from './game.types'
 import type {
   IshipWeapon,
+  IsecondaryWeapon,
   upgradeArray
 } from './game.types'
 import type {IupgradeType} from './Present'
@@ -23,12 +25,18 @@ export interface Iprops {
 interface IcurrentWeapon extends IshipWeapon {
   lifeSpan: number
 }
+interface IcurrentSecondaryWeapon extends IsecondaryWeapon {
+  lifeSpan: number
+}
 
 export default class Ship {
   type: string;
   position: Iposition;
   weapondDefault:IshipWeapon;
   weaponCurrent:IshipWeapon;
+  secondaryWeapon:IsecondaryWeapon;
+  secondaryWeapondDefault: IsecondaryWeapon;
+  secondaryLastShot:number;
   velocity: Iposition;
   radius: number;
   rotation: number;
@@ -43,7 +51,7 @@ export default class Ship {
   lastShotLimit: number;
   delete: boolean;
   imgShip: HTMLImageElement;
-  newWeapon:Function = (weapon:IshipWeapon) => {
+  newWeapon:Function = (weapon:IshipWeapon):void => {
     this.weaponCurrent=weapon
     this.weaponCurrent.lifeSpan=weapon.duration
     this.updateUpgradeFuel({
@@ -52,6 +60,9 @@ export default class Ship {
     })
     this.lastShotLimit = weapon.lastShotLimit
   }
+  public updateSecondaryWeapon:Function = (weapon:IsecondaryWeapon):void => {
+    this.secondaryWeapon = weapon
+  } 
   id: number;
 
   constructor(props: Iprops) {
@@ -65,6 +76,15 @@ export default class Ship {
       duration:0
     } as IcurrentWeapon
     this.weaponCurrent = this.weapondDefault
+    this.secondaryWeapondDefault = {
+      type: 'default',
+      size: 2,
+      range: 400,
+      lastShotLimit: 1700,
+      duration:0,
+      speed: 0
+    } as IcurrentSecondaryWeapon
+    this.secondaryWeapon = this.secondaryWeapondDefault
 
     this.position = props.position as Iposition
     this.velocity = {
@@ -78,6 +98,7 @@ export default class Ship {
     this.inertia = 0.99;
     this.radius = 20;
     this.lastShot = 0;
+    this.secondaryLastShot = 0;
     this.lastShotLimit = props.lastShotLimit || 170
     this.create = props.create;
     this.updateUpgradeFuel = props.updateUpgradeFuel;
@@ -176,6 +197,36 @@ export default class Ship {
               total: item.duration
             })
         }
+    }
+
+    // secondary weapon
+    if (state.keys.weapon && this.secondaryWeapon.type !== 'default') { 
+      const item = this.secondaryWeapon as IcurrentSecondaryWeapon
+        if (item.lifeSpan-- < 0) { 
+          this.updateSecondaryWeapon(null)
+          //this.updateUpgradeFuel(0,0)
+        } else {
+          /*
+            this.updateUpgradeFuel({
+              data: item.lifeSpan,
+              total: item.duration
+            })
+          */
+        }
+    }
+
+    if (state.keys.weapon && this.secondaryWeapon.type !== 'default' && (Date.now() - this.secondaryLastShot > this.secondaryWeapon.lastShotLimit)) {
+      switch(this.secondaryWeapon.type) {
+        case 'speedShot':
+          this.onSound({
+            file: 'speedShot',
+            status: 'PLAYING'
+          })
+          const shot = new LazarBullet({ship: this, speedTransformation:-100, range: 1020});
+          this.create(shot, 'lazars');
+          break;
+      }
+      this.secondaryLastShot = Date.now();
     }
 
     if (state.keys.space && Date.now() - this.lastShot > this.lastShotLimit) {

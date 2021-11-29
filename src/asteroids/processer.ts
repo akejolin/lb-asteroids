@@ -37,6 +37,43 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
   }
 }
 */
+/*
+export const RectCircleColliding:Function = (rect:any, circle:any):boolean => {
+  
+  //var dx=Math.abs(circle.position.x-(rect.position.x + rect.w/2));
+  //var dy=Math.abs(circle.position.y-(rect.position.y + rect.position.y/2));
+  var dx=Math.abs(circle.position.x-(rect.position.x+rect.w/2));
+  var dy=Math.abs(circle.position.y-(rect.position.y+rect.h/2));
+
+  if( dx > circle.radius + rect.w/2 ){ return(false); }
+  if( dy > circle.radius + rect.h/2 ){ return(false); }
+
+  if( dx <= rect.w ){ return(true); }
+  if( dy <= rect.h ){ return(true); }
+
+  var dx=dx-rect.w;
+  var dy=dy-rect.h
+  var length = Math.sqrt(dx * dx + dy * dy);
+
+  return(length<=circle.radius);
+}
+*/
+
+export const RectCircleColliding:Function = (rect:any, circle:any):boolean => {
+  const distX = Math.abs(circle.position.x - rect.position.x-rect.w/2);
+  const distY = Math.abs(circle.position.y - rect.position.y-rect.h/2);
+
+  if (distX > (rect.w/2 + circle.radius)) { return false; }
+  if (distY > (rect.h/2 + circle.radius)) { return false; }
+
+  if (distX <= (rect.w/2)) { return true; } 
+  if (distY <= (rect.h/2)) { return true; }
+
+  var dx=distX-rect.w/2;
+  var dy=distY-rect.h/2;
+  return (dx*dx+dy*dy<=(circle.radius*circle.radius));
+}
+
 
   export const checkCollision = (obj1:CanvasItem, obj2:CanvasItem, distance = 0):boolean => {
     var vx = obj1.position.x - obj2.position.x;
@@ -61,7 +98,8 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
     primary:string,
     secondary:Array<string>,
     cb:Function,
-    inRadarCb:Function = () => {}
+    inRadarCb:Function = () => {},
+    isCollision:Function = checkCollision
   ):Promise<void> => new Promise<void>((resolve, reject) => {
    
     const primaryArray:CanvasItem[] = haystack[`${primary}s`]
@@ -76,13 +114,11 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
       for (b; b > -1; --b) {
         const item1 = primaryArray[a];
         const item2 = secondaryArray[b];
-        if (item1 && item2 && checkCollision(item1, item2)) {
+        if (item1 && item2 && isCollision(item1, item2)) {
           cb(item1, item2)
           resolve()
         }
         inRadarCb(checkInradar(item1, item2), item1, item2)
-
-
       }
     }
     resolve()
@@ -100,32 +136,3 @@ export const updateObjects = (targets:CanvasItemGroups, state:IState, ctx: any) 
     }
     return false;
   }
-
-
-/*
-  export const collisionBetween = (
-    haystack:CanvasItemGroups,
-    primary:string,
-    secondary:Array<string>,
-    cb:Function
-  ):void => {
-   
-    const primaryArray:CanvasItem[] = haystack[`${primary}s`]
-    let secondaryArray:CanvasItem[] = []
-    secondary.forEach(element => {
-      secondaryArray.push(...haystack[`${element}s`])
-    });
-    let a = primaryArray.length - 1;
-    let b;
-    for (a; a > -1; --a) {
-      b = secondaryArray.length - 1;
-      for (b; b > -1; --b) {
-        const item1 = primaryArray[a];
-        const item2 = secondaryArray[b];
-        if (item1 && item2 && checkCollision(item1, item2)) {
-          cb(item1, item2)
-        }
-      }
-    }
-  }
-  */

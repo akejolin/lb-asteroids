@@ -110,8 +110,8 @@ export const generatePresent = (that:any) => {
         create: that.createObject,
         addScore: that.addScore.bind(that),
         upgrade: () => {},
-        //upgradeType: randomInterger(0,7),
-        upgradeType: randomInterger(7,7),
+        upgradeType: randomInterger(0,7),
+        //upgradeType: randomInterger(4,4),
         onSound: that.onSound.bind(that)
       });
       that.createObject(present, 'presents');
@@ -150,7 +150,8 @@ export const generateShield = (that:any) => {
       create: that.createObject.bind(that),
       ship: ship,
       updateShieldFuel: (data:number) => that.props.actions.updateShieldFuel(data),
-      onSound: that.onSound.bind(that)
+      onSound: that.onSound.bind(that),
+      onStopSound: that.onStopSound.bind(that)
     })
     that.createObject(shield, 'shields');
   }

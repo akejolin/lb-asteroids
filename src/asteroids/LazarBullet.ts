@@ -23,6 +23,8 @@ export default class Bullet {
   originPos: Iposition;
   velocity: Iposition;
   radius: number;
+  w:number;
+  h:number;
   delete: boolean;
   range: number = 400
   lifeSpan: number = 50
@@ -53,7 +55,7 @@ export default class Bullet {
       this.rotation = this.rotation + props.additionalRotation
     }
 
-    let posDelta = rotatePoint({x:0, y:props.speedTransformation ? props.speedTransformation : -20}, {x:0,y:0}, this.rotation * Math.PI / 180);
+    let posDelta = rotatePoint({x:0, y: props.speedTransformation ? props.speedTransformation : -20}, {x:0,y:0}, this.rotation * Math.PI / 180);
     this.position = {
       x: props.ship.position.x + posDelta.x,
       y: props.ship.position.y + posDelta.y
@@ -63,12 +65,13 @@ export default class Bullet {
       y: props.ship.position.y + posDelta.y
     };
 
-    console.log(posDelta.x/2)
     this.velocity = {
       x:(posDelta.x/2),
       y:(posDelta.y/2)
     };
     this.radius = props.size || 2;
+    this.w = 2;
+    this.h = 100;
     this.isInRadar = false;
   }
 
@@ -151,7 +154,8 @@ export default class Bullet {
       context.fillStyle = this.color
       context.lineWidth = 0.5
       context.beginPath()
-      context.arc(0, 0, this.radius, 0, this.radius * Math.PI)
+      //context.arc(0, 0, this.radius, 0, this.radius * Math.PI)
+      context.rect(0, 0, this.w, this.h);
       context.closePath()
       context.fill()
       context.restore()

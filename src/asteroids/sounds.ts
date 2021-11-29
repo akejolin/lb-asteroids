@@ -33,7 +33,7 @@ export default {
   ),
   enemyShowUp: new UIfx(
     //soundEnemyShowUp,
-    `${SNOWPACK_PUBLIC_PUBLIC_URL}/sounds/enemy-show-up.mp3`,
+    `${SNOWPACK_PUBLIC_PUBLIC_URL}/sounds/enemy-alert.mp3`,
     {
       volume: 1.0,
       throttleMs: 100
@@ -73,6 +73,27 @@ export default {
   ),
   klink: new UIfx(
     `${SNOWPACK_PUBLIC_PUBLIC_URL}/sounds/klink.mp3`,
+    {
+      volume: 1.0,
+      throttleMs: 100
+    }
+  ),
+  autoShieldActive: new UIfx(
+    `${SNOWPACK_PUBLIC_PUBLIC_URL}/sounds/auto-shield-active.mp3`,
+    {
+      volume: 1.0,
+      throttleMs: 100
+    }
+  ),
+  speedShot: new UIfx(
+    `${SNOWPACK_PUBLIC_PUBLIC_URL}/sounds/speed-shot.mp3`,
+    {
+      volume: 1.0,
+      throttleMs: 100
+    }
+  ),
+  background: new UIfx(
+    `${SNOWPACK_PUBLIC_PUBLIC_URL}/sounds/background.mp3`,
     {
       volume: 1.0,
       throttleMs: 100

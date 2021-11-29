@@ -7,6 +7,7 @@ let classRoot = this;
 export interface Iprops {
   position:Iposition,
   onSound:Function,
+  onStopSound:Function,
   create:Function,
   ship:CanvasItem,
   updateShieldFuel:Function,
@@ -18,6 +19,7 @@ export default class AutoShield {
   velocity: Iposition;
   position: Iposition;
   onSound: Function;
+  onStopSound: Function;
   create:Function;
   radius: number;
   vertices;
@@ -30,6 +32,7 @@ export default class AutoShield {
   updateShieldFuel:Function
   public radarRadius:number = 20
   public radarThreshold: number = 0
+  flashInterval:number = 5
 
  
 
@@ -40,11 +43,12 @@ export default class AutoShield {
       y: randomNumBetween(-1.5, 1.5)
     }
     this.onSound = props.onSound
+    this.onStopSound = props.onStopSound
     this.radius = 40;
     this.create = props.create;
     this.vertices = asteroidVertices(8, 40)
     this.color = '#FFFFFF';
-    this.alpha = 1;
+    this.alpha = 0.1;
     this.ship = props.ship;
     this.fuel = 500
     this.updateShieldFuel = props.updateShieldFuel
@@ -60,10 +64,25 @@ export default class AutoShield {
   }
 
   public addInterferer(item:CanvasItem) {
+    if (this.radarThreshold < 1) {
+      this.playSound()
+    }
     this.radarThreshold = 30 
   } 
   public removeInterferer(item:CanvasItem):void {
 
+  }
+  playSound():void{
+    this.onSound({
+      file: 'autoShieldActive',
+      status: 'PLAYING'
+    })
+  }
+  stopSound():void{
+    this.onStopSound({
+      file: 'autoShieldActive',
+      status: 'STOPPED'
+    })
   }
 
   render(state:IState, ctx:any) {
@@ -80,13 +99,23 @@ export default class AutoShield {
     }
 
     if (this.isActive) {
-      this.alpha = this.fuel/500
+      this.alpha = 1 //this.fuel/500
 
       this.fuel--
       this.radarThreshold--
       this.updateShieldFuel(this.fuel)
     } else {
-      this.alpha = 0.1
+      //his.alpha = 0.1
+      if (this.fuel < 200) {
+        this.alpha = 0.1
+        if (this.flashInterval-- < 0) {
+          this.alpha = 0
+          this.flashInterval = randomNumBetween(10,40)
+        }
+      } else {
+        this.alpha = 0.1
+      }
+      this.stopSound()
     }
 
     this.position.x = this.ship.position.x;

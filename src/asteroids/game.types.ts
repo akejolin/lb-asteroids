@@ -31,6 +31,7 @@ export interface Ishield extends CanvasItem {
 export interface ShipItem extends CanvasItem {
   upgrade: Function,
   newWeapon: Function,
+  updateSecondaryWeapon:Function,
 }
 export interface PresentItem extends CanvasItem {
   getUpgrade: Function,
@@ -83,6 +84,15 @@ export interface IshipWeapon extends IupgradeBase{
   range: number,
   lastShotLimit: number,
 }
+
+export interface IsecondaryWeapon extends IupgradeBase{
+  duration?: number,
+  lifeSpan?: number,
+  size: number,
+  range: number,
+  lastShotLimit: number,
+  speed: number,
+}
 export interface IshipEquipment extends IupgradeBase{
 
 }
@@ -102,7 +112,6 @@ export interface Isound {
     file: string,
     status: string
 }
-
 
 export interface Iuifx {
   file: string,

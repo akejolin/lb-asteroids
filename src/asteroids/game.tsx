@@ -14,6 +14,8 @@ import {
 import { themes } from './color-theme'
 import {
   updateObjects,
+  RectCircleColliding,
+  collisionBetween,
   collisionBetweens,
 } from './processer'
 import {
@@ -102,6 +104,7 @@ export class Game extends Component<IProps> {
       ships: [],
       shields: [],
       bullets: [],
+      lazars:[],
       presents: [],
       ufos: [],
       ufoBullets: [],
@@ -168,6 +171,10 @@ export class Game extends Component<IProps> {
           removeInterval('waitForGetReady')
           removeInterval('waitForRecovery')
           clearAllIntervals()
+          this.onSound({
+            file: 'background',
+            status: 'PLAYING'
+          })
           break;
         case 'GAME_START':
           clearAllIntervals()
@@ -249,6 +256,9 @@ export class Game extends Component<IProps> {
   onSound(data:Isound):void{
     sounds[data.file].play()
   }
+  onStopSound(data:Isound):void{
+    sounds[data.file].pause()
+  }
 
   createObject(item:CanvasItem, group:string = 'asteroids'):void {
     this.canvasItemsGroups[group].push(item);
@@ -285,9 +295,13 @@ export class Game extends Component<IProps> {
           inifityFuel:500
         })
       break;
+      case 'speedShot':
+        ship.updateSecondaryWeapon(upgrade)
+        break;
       case 'biggerBullets':
       case 'triple':
       case 'lazar':
+      
         ship.newWeapon(upgrade)
       break;
     }
@@ -401,6 +415,19 @@ async update():Promise<void> {
     ]
     await collisionBetweens(this.canvasItemsGroups, collisions)
 
+    await collisionBetween(
+      this.canvasItemsGroups,
+      'lazar',
+      [ 'asteroid', 'ufo'],
+      (item1:CanvasItem, item2:CanvasItem):void => {
+        item1.destroy(item2.type);
+        item2.destroy(item1.type);
+      },
+      ()=>{},
+      RectCircleColliding,
+    )
+
+
     // Generate new present
     if (this.state.nextPresentDelay-- < 0){
       this.state.nextPresentDelay = randomNumBetween(400, 1000)
@@ -414,7 +441,7 @@ async update():Promise<void> {
     const ufolimit = this.props.level - 1 
 
     if (this.state.ufoDelay-- < 0){
-      if (this.props.level > 1 && this.canvasItemsGroups['ufos'].length < ufolimit) {
+      if (this.props.level > -1 && this.canvasItemsGroups['ufos'].length < ufolimit) {
         createUfo(this) 
       }
       this.state.ufoDelay = randomNumBetween(400, 1000)
@@ -479,7 +506,7 @@ async update():Promise<void> {
           upgradeFuel={this.props.upgradeFuel}
           upgradeFuelTotal={this.props.upgradeFuelTotal}
         />
-        <GameBorder show={!this.state.inifityScreen}/>
+        <GameBorder show={!this.state.inifityScreen} inifityFuel={this.state.inifityFuel}/>
         <Canvas
           ref={this.canvasRef}
           background={themes[this.state.colorThemeIndex].background}
