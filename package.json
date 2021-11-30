@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "prepare": "snowpack",
     "start": "snowpack dev",
     "build": "snowpack build",
     "server": "node server/server.js",
