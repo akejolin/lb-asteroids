@@ -5,9 +5,7 @@ ENV NODE_ENV production
 WORKDIR /opt/app
 COPY package.json package-lock.json snowpack.config.mjs tsconfig.json /opt/app/
 
-RUN npm i
-
-RUN npm run prepare
+RUN npm install
 
 COPY src /opt/app/src
 RUN npm run build
